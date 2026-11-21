@@ -9,7 +9,7 @@ Line numbers are from `fizlet/battlefield` at `d28afe5`, the 1.0 engine cut on F
 
 - It is the only board game that needs all three bricks. Its tanks are DOM nodes (`src/view.ts`).
   It has grid line of sight and nearest-visible targeting (`src/model.ts`). It keeps pools of
-  shots and effects. Battlefield Blitz and Swarm Protocol draw their units on a canvas, so
+  shots and effects. Battlefield Blitz draws its units on a canvas, so
   `view-dom` has nothing to do there.
 - It has seeded replays (`tests/replay.test.mjs`, `tests/model.test.mjs`) and a zero-GC test
   (`tests/zero-gc.test.mjs`) to catch a port that changes the battle.

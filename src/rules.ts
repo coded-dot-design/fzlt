@@ -6,8 +6,8 @@
  * Each is DOM-free, steps without allocating (state lives in typed arrays) and says what happened
  * on the event ring (`wave:start`, `wave:clear`, `drop:spawn`, `drop:land`, `drop:collect`, `drop:expire`,
  * `score`, `combo:end`, `level`), so the HUD, sound, fx and coach layers react without reaching
- * into the game. Defaults are the DOM VIRUS core's (WaveDirector, SupplyDrops) and Null Invaders'
- * numbers, so a port keeps its feel. The game still decides where and what to spawn. Call
+ * into the game. Defaults are the numbers the first games shipped
+ * with, so a port keeps its feel. The game still decides where and what to spawn. Call
  * `collect`, `add` and `miss` from a step, like the rest of the game: their events go on that
  * frame's ring.
  */

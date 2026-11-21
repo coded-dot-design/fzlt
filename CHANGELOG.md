@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- **Breaking: every storage key and page hook is named for Fizlet.** Renames, with no alias left
+  behind (the older names are no longer read, matched or set):
+  - `@fzlt/core/ui`: `PERF_KEY` is `"fizlet:perf"`. A visitor's saved "Performance overlay" switch
+    is read from the new key, so it starts off once.
+  - `@fzlt/core/ui/tokens.json`: `name` is `"Fizlet Board UI"`; the `storage` keys are
+    `fizlet:theme`, `fizlet:perf`, `fizlet:<game>:sound` and `fizlet:doors`; the second entry of
+    `shadow.domains` is `"example: a site with a diagonal light"`.
+  - `@fzlt/core/arcade`: the default selectors match the `data-fizlet-*` hooks only
+    (`[data-fizlet-text]`, `[data-fizlet-target]`, `[data-fizlet-ignore]`), and the overlay host
+    carries `data-fizlet-host` and `data-fizlet-ignore` only. A page that used the older hook
+    attributes renames them to these.
+  Comments, docs, tests and the brick catalog name the Fizlet Arcade's games only; the repository
+  is https://github.com/fizlet/fzlt.
+
 - **Repository: the package alone, ready to become `fizlet/fzlt` (public, MIT).** The website
   (`site/`, `examples/`, its build scripts, its tests, the Pages deploy and the site, settle and
   page-cost CI jobs) moves to its own repository; fizlet.com is rebuilt there. No change to the

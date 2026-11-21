@@ -250,7 +250,7 @@ async function perfTest() {
   const errs = [];
   pp.on("pageerror", (e) => errs.push(e.message));
   // A real origin (about:blank denies localStorage outright, which the switch survives too).
-  // A host with a global border-box reset (the DOM VIRUS hub, Battlefield): the card keeps its size.
+  // A host with a global border-box reset (Battlefield): the card keeps its size.
   const html = `<!doctype html><meta charset="utf-8"><body style="margin:0"><style>${CSS}</style><style>*,*::before,*::after{box-sizing:border-box}</style>
 <div class="bui" id="board" style="position:relative;width:844px;height:390px;background:#07060f"><p id="keep" style="margin:0">field</p></div>
 <div class="bui" id="settings"><button id="perf-set" type="button" class="bui-key">Performance overlay</button></div><script>${bundle}</script></body>`;
@@ -1124,7 +1124,7 @@ ${fig("home#hero", "Sparks over the logo")}${box("home#box", "Sparks in a box")}
   where = "sprite";
   const spr = await page.evaluate(async () => {
     const { sprites, spriteURL, sherman } = fizlet;
-    // Reference: the hull tile exactly as sherman-bytes/src/sprites.ts paints it (copied for the test).
+    // Reference: the hull tile exactly as the game it came from paints it (copied for the test).
     const original = (color, frame) => {
       const tile = document.createElement("canvas");
       tile.width = tile.height = 32;

@@ -91,16 +91,14 @@ export const dimOf = (b) => (DIMS[1].ids.includes(b.id) ? "3d" : "2d");
  */
 
 /**
- * The released games, each at its latest tag (github.com/coded-dot-design/<repo>/tags): the `used`
+ * The released games, each at its latest tag (github.com/fizlet/<repo>/tags): the `used`
  * lines below name them through this, so a new release is one edit here. A game counts once a tag
  * ships the brick; the sites count once their deployed build does.
  */
 const GAME = {
-  battlefield: "DOM Battlefield 1.0.3", blitz: "Battlefield Blitz 1.0.1", invaders: "Null Invaders 1.0.3",
-  runner: "Byte Runner 1.0.2", sherman: "Sherman Bytes 1.1.0", swarm: "Swarm Protocol 1.4.0",
+  battlefield: "DOM Battlefield 1.0.3", blitz: "Battlefield Blitz 1.0.1", crossfire: "DOM Crossfire",
+  dune: "Dune Hop", salvo: "Salvo Bay", holeshot: "Holeshot", orbiters: "Orbiters", city: "CitySmash",
 };
-/** The three arcade games, which take most bricks through @fzlt/core/arcade. */
-const ARCADE = `${GAME.invaders}, ${GAME.runner} and ${GAME.sherman}`;
 /** The DOM Battlefield site's hero battle (a slot scene on the kernel, fx and sprite). */
 const BF_HERO = `the hero battle on the ${GAME.battlefield} site`;
 /** The BETA bricks that ship now: what COMPLETE still asks for. */
@@ -114,19 +112,19 @@ const API_CHECK = "Shipped now; COMPLETE also asks that its API has had no break
  * (not its own demo); `why` says what keeps a BETA brick from COMPLETE.
  */
 export const BRICKS = [
-  { id: "kernel", no: 1, sym: "kr", family: "kernel", status: "complete", since: "0.1.0", tests: ["kernel.test.mjs", "browser.mjs"], used: [`every game: ${Object.values(GAME).join(", ")}`, "fizlet.com", "the DOM VIRUS site"],
+  { id: "kernel", no: 1, sym: "kr", family: "kernel", status: "complete", since: "0.1.0", tests: ["kernel.test.mjs", "browser.mjs"], used: [`every game: ${Object.values(GAME).join(", ")}`, "fizlet.com"],
     tag: "KERNEL", role: "go", modules: [{ ...mod("@fzlt/core", "index", "@fzlt/core (kernel)"), src: "src/index.ts" }], demo: "settle",
     snippet: `const e = createEngine({ root: board, seed: 7 });
 e.add({ step(e, dt) {/* sim */}, render(e) {/* DOM */} });
 e.start(); // e.destroy() gives the page back` },
-  { id: "input", no: 4, sym: "in", family: "input", status: "complete", since: "0.2.0", tests: ["bricks.test.mjs", "browser.mjs", "page.test.mjs"], used: [GAME.blitz, `${ARCADE} (through @fzlt/core/arcade)`],
+  { id: "input", no: 4, sym: "in", family: "input", status: "complete", since: "0.2.0", tests: ["bricks.test.mjs", "browser.mjs", "page.test.mjs"], used: [GAME.blitz, GAME.crossfire, GAME.dune, GAME.holeshot, GAME.orbiters, GAME.city],
     tag: "INPUT", role: "sys", modules: [mod("@fzlt/core/input", "input")],
     snippet: `const pad = controls(e, { keys: { fire: ["Space"] } });
 if (pad.hit("fire")) fire(); // true for one frame
 if (pad.pointer.hit) aim(pad.pointer.x, pad.pointer.y);` },
-  { id: "pad", no: 12, sym: "pd", family: "input", status: "complete", since: "0.3.3", tests: ["bricks.test.mjs", "browser.mjs"], used: [`${ARCADE} (through @fzlt/core/arcade)`],
+  { id: "pad", no: 12, sym: "pd", family: "input", status: "complete", since: "0.3.3", tests: ["bricks.test.mjs", "browser.mjs"], used: [GAME.dune, GAME.holeshot, GAME.orbiters, GAME.city],
     tag: "PAD", role: "advance", modules: [mod("@fzlt/core/pad", "pad")] },
-  { id: "collide", no: 5, sym: "cl", family: "motion", status: "complete", since: "0.2.0", tests: ["bricks.test.mjs"], used: [`${GAME.blitz} (inRect)`, `${GAME.invaders}, ${GAME.runner}, ${GAME.sherman} and ${GAME.swarm} (the page-text Grid inside @fzlt/core/board-page)`],
+  { id: "collide", no: 5, sym: "cl", family: "motion", status: "complete", since: "0.2.0", tests: ["bricks.test.mjs"], used: [`${GAME.blitz} (inRect)`, GAME.crossfire],
     tag: "COLLIDE", role: "cmd", modules: [mod("@fzlt/core/collide", "collide")],
     snippet: `const grid = new Grid(32, 64, w, h); // cell, cap, world
 grid.clear(); grid.add(xs, ys, rs, i); // typed arrays
@@ -149,7 +147,7 @@ fx.step(dt); fx.draw(ctx); // pooled: never allocates` },
   { palettes: [{ team: "#39ffb0" }, { team: "#ff5c8f" }] });
 art.draw(ctx, "bug", frame, x, y, angle, 3, side);
 img.src = spriteURL(def, 0, palettes); // the same pixels as SVG` },
-  { id: "sound", no: 7, sym: "sn", family: "render", status: "complete", since: "0.2.0", tests: ["sound.test.mjs", "browser.mjs"], used: [GAME.blitz, `${ARCADE} (through @fzlt/core/arcade)`],
+  { id: "sound", no: 7, sym: "sn", family: "render", status: "complete", since: "0.2.0", tests: ["sound.test.mjs", "browser.mjs"], used: [GAME.blitz, GAME.crossfire, GAME.dune, GAME.salvo, GAME.holeshot, GAME.orbiters, GAME.city],
     tag: "SOUND", role: "advance", modules: [mod("@fzlt/core/sound", "sound")], demo: "sound",
     snippet: `const sfx = sound(e, { cues: { boom: "boom" } });
 e.events.emit("boom"); // in a step; plays after render
@@ -161,22 +159,22 @@ sfx.on = false;        // mute` },
   easterEgg: { sequence: "konami" } });` },
   { id: "slot", no: 9, sym: "sl", family: "page", status: "complete", since: "0.3.0", tests: ["slot.test.mjs", "browser.mjs", "page.test.mjs"], used: ["fizlet.com: the home hero, the fizz and the gallery", BF_HERO],
     tag: "SLOT", role: "sys", modules: [mod("@fzlt/core/slot", "slot")] },
-  { id: "hud", no: 13, sym: "hd", family: "game", status: "beta", since: "0.3.6", tests: ["hud.test.mjs", "browser.mjs"], used: [`${GAME.sherman} (its scoreboard is @fzlt/core/arcade's skirmish preset)`, "fizlet.com: Before AI: 2015, live (the arcade column's score, combo and best)"], why: API_CHECK,
+  { id: "hud", no: 13, sym: "hd", family: "game", status: "beta", since: "0.3.6", tests: ["hud.test.mjs", "browser.mjs"], used: ["fizlet.com: Before AI: 2015, live (the arcade column's score, combo and best)"], why: API_CHECK,
     tag: "HUD", role: "aim", modules: [mod("@fzlt/core/hud", "hud")] },
-  { id: "match", no: 15, sym: "mt", family: "game", status: "beta", since: "0.4.3", tests: ["match.test.mjs", "browser.mjs"], used: [`${GAME.sherman} (the skirmish preset's countdown, pause and result run on it)`], why: API_CHECK,
+  { id: "match", no: 15, sym: "mt", family: "game", status: "beta", since: "0.4.3", tests: ["match.test.mjs", "browser.mjs"], used: ["@fzlt/core/arcade's skirmish preset (its countdown, pause and result run on it)"], why: API_CHECK,
     tag: "MATCH", role: "go", modules: [mod("@fzlt/core/match", "match")] },
-  { id: "board-page", no: 16, sym: "br", family: "page", status: "complete", since: "0.4.4", tests: ["board-page.test.mjs", "browser.mjs"], used: [GAME.swarm, `${ARCADE} (through @fzlt/core/arcade)`],
+  { id: "board-page", no: 16, sym: "br", family: "page", status: "complete", since: "0.4.4", tests: ["board-page.test.mjs", "browser.mjs"], used: ["fizlet.com: the gallery"],
     tag: "BOARD PAGE", role: "attack", modules: [mod("@fzlt/core/board-page", "board-page")] },
   { id: "presence", no: 14, sym: "pr", family: "inhouse", status: "beta", since: "0.4.0", tests: ["presence.test.mjs", "rollback.test.mjs", "api.test.mjs"], used: [`${GAME.blitz} multiplayer (behind an invite code)`], why: "The API is still growing: interpolation and AI players come next.",
     tag: "PRESENCE", role: "cmd", modules: [mod("@fzlt/core/presence", "presence"), { ...mod("@fzlt/core/presence/check", "presence-check"), sym: "pc" }, mod("@fzlt/core/presence/rollback", "rollback")] },
-  { id: "ui", no: 2, sym: "ui", family: "page", status: "complete", since: "0.1.0", tests: ["ui.test.mjs", "tokens.test.mjs", "browser.mjs"], used: [GAME.battlefield, GAME.blitz, `${ARCADE} (through @fzlt/core/arcade)`, "fizlet.com", "the DOM VIRUS, DOM Battlefield and Battlefield Blitz sites"],
+  { id: "ui", no: 2, sym: "ui", family: "page", status: "complete", since: "0.1.0", tests: ["ui.test.mjs", "tokens.test.mjs", "browser.mjs"], used: [`every game: ${Object.values(GAME).join(", ")}`, "fizlet.com", "the DOM Battlefield and Battlefield Blitz sites"],
     tag: "BOARD UI", role: "fire", modules: [mod("@fzlt/core/ui", "ui/board-ui", "@fzlt/core/ui (js)")], sizes: ["@fzlt/core/ui (js)", "@fzlt/core/ui (css)"],
     snippet: `applyPalette(root, { sys: "#06c4ff" }); // hex only
 press(key, () => fire(), signal); // touch-safe
 launch(startKey, start); // press, invert, shatter` },
-  { id: "perf", no: 18, sym: "pf", family: "page", status: "complete", since: "0.7.0", tests: ["perf.test.mjs", "browser.mjs"], used: [`${GAME.battlefield} and the DOM VIRUS site (the performance switch)`],
+  { id: "perf", no: 18, sym: "pf", family: "page", status: "complete", since: "0.7.0", tests: ["perf.test.mjs", "browser.mjs"], used: [`${GAME.battlefield} (the performance switch)`],
     tag: "PERF", role: "sys", modules: [mod("@fzlt/core/perf", "perf")] },
-  { id: "rules", no: 17, sym: "rl", family: "game", status: "complete", since: "0.6.0", tests: ["rules.test.mjs"], used: ["DOM Battlefield 1.0.0 (supply drops: drops in src/model.ts, dom-battlefield#11)", "Battlefield Blitz 0.8.0+ (supply crates: drops in src/game.ts, Blitz#4)", "Null Invaders 1.0 (drops, score)", "Sherman Bytes 1.0 (drops, score, waves)"],
+  { id: "rules", no: 17, sym: "rl", family: "game", status: "complete", since: "0.6.0", tests: ["rules.test.mjs"], used: ["DOM Battlefield 1.0.0 (supply drops: drops in src/model.ts, dom-battlefield#11)", "Battlefield Blitz 0.8.0+ (supply crates: drops in src/game.ts, Blitz#4)"],
     tag: "RULES", role: "advance", modules: [mod("@fzlt/core/rules", "rules")] },
   { id: "steer", no: 21, sym: "st", family: "motion", status: "complete", since: "0.17.0", tests: ["steer.test.mjs", "math-engines.mjs"], used: ["Battlefield Blitz (every tank: drive, seek, arriveGoal, wander and the exact hypot in src/game.ts; dom-battlefield-blitz#22, from its next release)"],
     tag: "STEER", role: "advance", modules: [mod("@fzlt/core/steer", "steer")],
@@ -189,7 +187,7 @@ m.seek(0, player.x, player.y, dt); // in a step: also flee, arrive, wander, patr
 const t = tour(e), c = card(root, { onEnd: quit });
 t.tick(dt); if (moved > 220) t.pass(); // in a step
 const k = t.show(); if (k >= 0) c.show(\`\${k + 1}/10\`, STEPS[k], TEXT[k]);` },
-  { id: "timeline", no: 23, sym: "tm", family: "motion", status: "beta", since: "0.19.0", tests: ["timeline.test.mjs", "timeline.mjs"], used: ["fizlet.com: the home page's reveals and parallax, the origin hero and Before AI: 2015, live", "the DOM VIRUS site: the cartridge console, the detail-page scenes and the diagrams"], why: API_CHECK,
+  { id: "timeline", no: 23, sym: "tm", family: "motion", status: "beta", since: "0.19.0", tests: ["timeline.test.mjs", "timeline.mjs"], used: ["fizlet.com: the home page's reveals and parallax, the origin hero and Before AI: 2015, live"], why: API_CHECK,
     tag: "TIMELINE", role: "fire", modules: [mod("@fzlt/core/timeline", "timeline")], demo: "timeline",
     snippet: `timeline(e)
   .to(cart, { translate: ["0px -150px", "0px 0px"] }, { dur: 0.7, ease: "back" })
@@ -197,7 +195,7 @@ const k = t.show(); if (k >= 0) c.show(\`\${k + 1}/10\`, STEPS[k], TEXT[k]);` },
   .to(screen, { "clip-path": ["inset(50%)", "inset(0%)"] }, { at: "seated" })
   .to(lines, { opacity: [0, 1] }, { stagger: 0.15 })
   .play(); // e.destroy() gives every property back` },
-  { id: "touch", no: 24, sym: "tc", family: "input", status: "beta", since: "0.20.0", tests: ["touch.mjs"], used: [`${ARCADE} (through @fzlt/core/arcade: no page zoom while a run is live)`, "the DOM Battlefield and Battlefield Blitz sites", "fizlet.com: every page"], why: API_CHECK,
+  { id: "touch", no: 24, sym: "tc", family: "input", status: "beta", since: "0.20.0", tests: ["touch.mjs"], used: [`${GAME.crossfire}, ${GAME.dune}, ${GAME.orbiters} and ${GAME.city}`, "the DOM Battlefield and Battlefield Blitz sites", "fizlet.com: every page"], why: API_CHECK,
     tag: "TOUCH", role: "sys", modules: [mod("@fzlt/core/touch", "touch")],
     snippet: `lockTouch(); // pinch never zooms the page from a slot, a game or the pad
 lockTouch(document, null); // a full-screen board: the whole page` },
@@ -365,9 +363,9 @@ sky.fillRect(0, 0, d.width, horizon(d)); // the sky ends where level ground does
     tag: "MATH", role: "advance", modules: [mod("@fzlt/core/math", "math")],
     snippet: `const a = atan2(ty - y, tx - x); // in a step: the same bits on an iPhone and a desktop
 x += cos(a) * v * dt; y += sin(a) * v * dt;` },
-  { id: "arcade", no: 20, sym: "ar", family: "game", status: "complete", since: "0.11.0", tests: ["arcade.test.mjs", "arcade.mjs", "arcade-game.mjs", "arcade-hud.mjs"], used: [GAME.invaders, GAME.runner, GAME.sherman],
+  { id: "arcade", no: 20, sym: "ar", family: "game", status: "complete", since: "0.11.0", tests: ["arcade.test.mjs", "arcade.mjs", "arcade-game.mjs", "arcade-hud.mjs"], used: ["three released page-arcade card games"],
     tag: "ARCADE", role: "go", modules: [mod("@fzlt/core/arcade", "arcade")],
-    snippet: `const game = arcade({ id: "null-invaders", title: "Null Invaders", color: "#06c4ff",
+    snippet: `const game = arcade({ id: "my-game", title: "My Game", color: "#06c4ff",
   hint: "Mouse / WASD · Space fires", css: KIT_CSS, fire: true,
   readouts: [["Score", "team"], ["Wave"]], colors: ["#06c4ff"],
   cues: { fire: "fire" }, create: (ctx) => myRules(ctx) }, { root: "main" });

@@ -1,4 +1,4 @@
-/** Seeded random (the DOM VIRUS core LCG, same sequence). Use it for anything that changes the
+/** Seeded random (an LCG; the sequence is fixed and tested). Use it for anything that changes the
  *  simulation, so a run can be replayed or synced; `state` reads and restores it for snapshots.
  *  The state lives in a Uint32Array so drawing a number never allocates. */
 export interface Random {

@@ -42,7 +42,7 @@ export declare function readouts(parent: HTMLElement, items: [label: string, ton
 };
 export declare function press(el: HTMLElement, fn: () => void, signal: AbortSignal): void;
 export declare function pressCue(root: HTMLElement | Document, signal?: AbortSignal): void;
-export declare const PERF_KEY = "dom-virus:perf";
+export declare const PERF_KEY = "fizlet:perf";
 export declare function setting(button: HTMLElement, key: string, change: (on: boolean) => void, signal: AbortSignal, fallback?: boolean): {
     readonly on: boolean;
     set: (next: boolean, save?: boolean) => void;

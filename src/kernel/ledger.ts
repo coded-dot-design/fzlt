@@ -2,8 +2,8 @@
  * The ledger: every change the engine makes to the page goes through here, so `restore()` (Recall)
  * puts the page back exactly. It is also the change-only writer: writing the value already there
  * touches nothing. Rule: a newer edit by the host page always wins (we never overwrite it, and we
- * never restore over it). Merged from the DOM VIRUS core MutationLedger and Swarm's style/attribute
- * ledgers; adds classes and nodes the engine adds to the page.
+ * never restore over it). One ledger for styles, attributes,
+ * classes and the nodes the engine adds to the page.
  */
 type El = HTMLElement | SVGElement;
 interface Rec<V> {

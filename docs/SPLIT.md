@@ -124,12 +124,12 @@ In this order:
   tag on every later run and does nothing, so publish that tag by hand after the transfer (Actions >
   Release to npm > Run workflow, tag `vX.Y.Z`).
 - **377 merged before the site serves fizlet.com from its own repository.** `pages.yml` is gone, so
-  `coded-dot-design.github.io/fizlet/` stops getting new builds, and links to it break once Pages is
+  the old Pages address stops getting new builds, and links to it break once Pages is
   turned off. The hosted `fizlet.js` and `dist/` stay at the last deploy and fall behind npm.
 - **The repository made private, or transferred to a private repository.** The publish fails at the
   provenance step.
 - **No `NPM_TOKEN` in `fizlet/fzlt`.** Every release checks and packs, then warns and skips the
   publish. Nothing is published until the secret is added and the tag is run by hand.
-- **A new repository created under the old name (`coded-dot-design/fizlet`).** GitHub's redirect
+- **A new repository created under the old owner and name.** GitHub's redirect
   from the old address stops. Old clones, links in published READMEs and issue links then point at
   the new repository instead of `fizlet/fzlt`.

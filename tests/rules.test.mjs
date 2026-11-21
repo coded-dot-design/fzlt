@@ -1,4 +1,4 @@
-// @fzlt/core/rules (Node, headless): waves keep the DOM VIRUS core's timing, drops fall / collect /
+// @fzlt/core/rules (Node, headless): waves keep the reference director's timing, drops fall / collect /
 // expire, score combos and levels, every rule reports on the event ring, and none allocates per frame.
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -24,7 +24,7 @@ const during = (e, fn) => {
   return r;
 };
 
-// The DOM VIRUS core's WaveDirector (dom-virus src/waves.ts, MIT), the behaviour waves() replaces.
+// A reference wave director, written out in full: the behaviour waves() must keep.
 class WaveDirector {
   wave = 1; phase = "prepare"; remaining = 0; countdown = 4; spawnIn = 0; capacity = 32;
   get limit() { return Math.min(this.capacity, 8 + this.wave * 4); }
@@ -43,7 +43,7 @@ class WaveDirector {
   rest() { this.spawnIn = Math.max(0.7, 2.1 - this.wave * 0.12); }
 }
 
-test("waves: the same waves, phases and spawns as the core's WaveDirector", () => {
+test("waves: the same waves, phases and spawns as the reference WaveDirector", () => {
   const e = createEngine(), dt = 1 / 60;
   // enemies live 1.5 s; both sides spawn under the same rule
   const mine = [], ref = [], d = new WaveDirector();
@@ -142,7 +142,7 @@ test("score: combo multiplier, decay, levels and events", () => {
   const log = listen(e);
   const got = [];
   during(e, () => { for (let i = 0; i < 7; i++) got.push(s.add(25, 4)); });
-  assert.deepEqual(got, [25, 25, 25, 50, 50, 50, 75], "1 + floor(streak / 3), the Null Invaders combo");
+  assert.deepEqual(got, [25, 25, 25, 50, 50, 50, 75], "1 + floor(streak / 3), the combo");
   assert.equal(s.points, 300);
   assert.equal(s.level, 2, "28 XP passed 8 and 24");
   assert.equal(s.next, 22);

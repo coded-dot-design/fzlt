@@ -186,7 +186,7 @@ function onPage(opts) {
 // The scheduler gives a paused engine no frames: only frame while it runs.
 const live = (e, sec) => (e.paused.length ? [] : run(e, sec));
 
-test("timeline: an engine auto-pause suspends it; the engine's resume plays it on (dom-virus#33)", () => {
+test("timeline: an engine auto-pause suspends it; the engine's resume plays it on", () => {
   for (const [why, away, back] of [
     ["off screen", (p) => p.onScreen(false), (p) => p.onScreen(true)],
     ["hidden tab", (p) => p.hidden(true), (p) => p.hidden(false)],
