@@ -5,7 +5,7 @@ Battlefield keeps a copy in `board-ui/` until it imports the package. Live guide
 https://battlefield.fzlt.games/style-guide/ (built from the kit only). Kit:
 `src/ui/board-ui.css` + `src/ui/board-ui.ts`. Tokens: `src/ui/tokens.json`.
 
-This is the spec for **every DOM VIRUS game board**. A new board reuses this UI exactly: the keys,
+This is the spec for **every Fizlet game board**. A new board reuses this UI exactly: the keys,
 their states, the cards, overlays, launch bursts, comms toast, tips, boot screen and the layouts
 for desktop, compact desktop, full screen and phones. **The only thing that changes from game to
 game is the palette** (section 3). If a board needs something this file does not cover, add it here
@@ -19,8 +19,8 @@ building, then section 16 (lessons: mistakes we already paid for) and section 17
 ## 1. Principles (the rules everything else follows)
 
 1. **Everything you can press is a 3D key.** A face over a hard base in the **domain's shadow
-   direction** (section 4.1): straight below by default and on every Battlefield board, 45°
-   down-right on the DOM VIRUS hub. A component never hard-codes a shadow direction; the domain
+   direction** (section 4.1): straight below by default and on every Battlefield board; a site can set
+   another angle, such as 45° down-right. A component never hard-codes a shadow direction; the domain
    sets it once, so a key, card or cartridge moved to another site takes that site's angle.
 2. **One physical travel.** Face and base move together on one curve (transform + box-shadow,
    120ms ease-out, 50ms on press). They never snap separately.
@@ -193,7 +193,7 @@ direction.** A component moved from one site to another takes the new site's ang
 | Domain | Setting |
 |---|---|
 | Battlefield, Blitz, any board (default) | none needed, or `:root { --shadow-x: 0; --shadow-y: 1; }` |
-| DOM VIRUS hub | `:root { --shadow-x: 1; --shadow-y: 1; }` (45° down-right) |
+| A site with a diagonal light (example) | `:root { --shadow-x: 1; --shadow-y: 1; }` (45° down-right) |
 | fizlet.com | `:root { --shadow-x: 0; --shadow-y: 1; }` (straight below, its keys and cards today) |
 
 ---
@@ -479,7 +479,7 @@ own action** (a reset that cancels effects must be told to keep it).
 - **Settings switch** (`setting(button, key, change, signal)` in `board-ui.ts`): a base key that rests
   locked (`aria-pressed="true"`) while on. Its state lives in localStorage as `"1"` / `"0"` under a
   key from `tokens.json` `storage`; storage that throws is ignored (the switch works, it forgets).
-- **Performance overlay** (`@fzlt/core/perf`, switch label "Performance overlay", key `dom-virus:perf`,
+- **Performance overlay** (`@fzlt/core/perf`, switch label "Performance overlay", key `fizlet:perf`,
   **off by default**, F9 toggles it): a flat card in a corner of the board, `--surface` on a 2u
   `--rim` border with a 3u rim base in the page's shadow direction, 9u/700 mono caps, numbers in `--ink`, labels in
   `--muted`. One 120 × 36u chart on `--bg`: a bar per frame, `--k-go` within 1.25 frame budgets,
@@ -505,10 +505,10 @@ own action** (a reset that cancels effects must be told to keep it).
 
 Skipped under `navigator.webdriver` (unless `?intro`) and reduced motion.
 
-### 12.2 Hand-off from the hub cartridge
+### 12.2 Hand-off from a hub
 
-The hub grows its console screen into the same shut doors and navigates **with them shut** (no
-stand-in screen). It sets `sessionStorage["dom-virus:doors"] = "shut"`. The game's pre-paint script
+A hub (a site that launches games) grows its screen into the same shut doors and navigates **with them shut** (no
+stand-in screen). It sets `sessionStorage["fizlet:doors"] = "shut"`. The game's pre-paint script
 reads and clears it, paints the doors shut (`data-boot-doors="hold"`: every boot animation paused
 at frame 0), and on `load` + one frame sets `open`: the doors open and the boot runs from the start.
 Door colours must match exactly in both apps.
@@ -587,7 +587,7 @@ Reduced motion: no loops, no bursts, no slams (static end states), instant trans
 Cue names are `@fzlt/core/sound`'s (`src/sound.ts`); it also has `boom`, `power` and `click`.
 
 Audio unlocks on the first trusted gesture; cues have cooldowns; at most 8 voices; muted state is
-remembered (`dom-virus:<game>:sound`).
+remembered (`fizlet:<game>:sound`).
 
 ---
 
@@ -660,7 +660,7 @@ names. Leaving `hud` out keeps the card byte for byte.
 |---|---|---|
 | `arcadeHud()` (default) | card, bottom right; folded at the top on phones | sound / pause / fold / exit; readouts; one meter; nav: actions, Next gate, Restart, Auto fire; toast; pad (stick + Fire) |
 | `skirmishHud({...})` (Blitz) | bar across the top; wraps to two rows on phones | fullscreen / sound / pause / fold / exit; nav when asked: Auto fire, Next gate, Restart; readouts (`num`, `clock`, `rank`, `pct`, `bar`); aim toggles; action keys with count badges; feed; banner; pause / surrender / countdown / result overlays; pad with aim toggles and counted keys |
-| `widget` (later) | card | Swarm Protocol's widget, behind a side-by-side screenshot check |
+| `widget` (later) | card | a floating widget, behind a side-by-side screenshot check |
 | `cockpit` (later) | rails on phones | DOM Battlefield's minimap, command card, orders |
 
 - **Readouts** are section 18's: label, value, tone. A `bar` readout is a track with the fill as

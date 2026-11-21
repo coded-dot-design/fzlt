@@ -124,7 +124,7 @@ export function pressCue(root: HTMLElement | Document, signal?: AbortSignal) {
 }
 
 /** localStorage key of the Settings "Performance overlay" switch (off by default). */
-export const PERF_KEY = "dom-virus:perf";
+export const PERF_KEY = "fizlet:perf";
 /**
  * A Settings switch: a key that is `aria-pressed` (the kit's locked state) while on, remembered
  * in localStorage under `key` as "1" / "0". Storage that throws (private mode, blocked cookies,

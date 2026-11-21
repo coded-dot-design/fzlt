@@ -7,7 +7,7 @@
  * (`@fzlt/core/sound`), sparks and stacking score popups, factory health painted into the buttons, and
  * a controller a hub drives: start, pause, resume, stop, destroy, getSnapshot. While a run is live,
  * a click on the page fires instead of following a link; the scoreboard, fields and
- * `[data-virus-ignore]` / `[data-fizlet-ignore]` keep their clicks. Recall (Escape, the exit key,
+ * `[data-fizlet-ignore]` keep their clicks. Recall (Escape, the exit key,
  * stop) destroys the engine, so every letter and button comes back exactly; a run that ends keeps
  * the scoreboard with the result until Recall. The game supplies `create(ctx)`: its own systems on
  * `ctx.engine`, reading `ctx.ctl` (written in the read phase) and drawing in render.
@@ -60,11 +60,11 @@ export type ArcadeStatus = "idle" | "running" | "paused" | "won" | "gameover" | 
 export interface ArcadeOptions<S> {
   /** The board: a selector or an element (default document.body). */
   root?: string | Element;
-  /** Text containers whose glyphs are terrain (default board-page's, plus [data-virus-text]). */
+  /** Text containers whose glyphs are terrain (default board-page's). */
   textSelector?: string;
-  /** Targets (default board-page's, plus [data-virus-target]). */
+  /** Targets (default board-page's). */
   targetSelector?: string;
-  /** More to leave alone, on top of [data-virus-ignore], [data-fizlet-ignore] and board-page's own. */
+  /** More to leave alone, on top of [data-fizlet-ignore] and board-page's own. */
   excludeSelector?: string;
   /** "system" (default) follows the visitor's colour scheme. */
   theme?: "dark" | "light" | "system";
@@ -264,7 +264,7 @@ export interface HudView {
 }
 
 const EDIT = 'input,textarea,select,[contenteditable],form,dialog,[role="dialog"]';
-const PROTECTED = "[data-virus-ignore],[data-fizlet-ignore]";
+const PROTECTED = "[data-fizlet-ignore]";
 // The card (the `arcade` preset): bottom right, folded to the top on phones.
 const CARD = `
 .ar{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));width:min(300px,calc(100% - 24px));display:grid;gap:10px;padding:10px 12px 12px;pointer-events:auto;color:var(--ink);background:color-mix(in srgb,var(--card) 94%,transparent);border:2.5px solid var(--line);border-radius:10px;box-shadow:calc(5px*var(--bui-sx)) calc(5px*var(--bui-sy)) 0 var(--bui-shadow)}
@@ -400,8 +400,7 @@ export function arcade<S>(def: ArcadeDef<S>, options: ArcadeOptions<S> = {}): Ar
   function begin() {
     const doc = document;
     const host = doc.createElement("div");
-    host.dataset.domVirusRoot = def.id;
-    host.dataset.virusIgnore = "";
+    host.dataset.fizletIgnore = "";
     host.setAttribute("data-fizlet-host", def.id);
     const theme = options.theme === "dark" || options.theme === "light" ? options.theme : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     const preset = def.hud ?? arcadeHud();
@@ -429,9 +428,8 @@ export function arcade<S>(def: ArcadeDef<S>, options: ArcadeOptions<S> = {}): Ar
       }));
       const board = boardPage(e, {
         root: (typeof options.root === "string" ? doc.querySelector(options.root) : options.root) ?? doc.body,
-        // Fizlet's defaults plus the DOM VIRUS hooks pages already carry.
-        text: options.textSelector ?? "h1,h2,h3,h4,h5,h6,p,li,blockquote,[data-fizlet-text],[data-virus-text]",
-        targets: options.targetSelector ?? "button,[role=button],a.button,a.btn,[data-fizlet-target],[data-virus-target]",
+        text: options.textSelector ?? "h1,h2,h3,h4,h5,h6,p,li,blockquote,[data-fizlet-text]",
+        targets: options.targetSelector ?? "button,[role=button],a.button,a.btn,[data-fizlet-target]",
         exclude: [PROTECTED, options.excludeSelector].filter(Boolean).join(","),
         color: def.color,
       });

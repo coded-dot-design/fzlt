@@ -21,13 +21,13 @@ test("embed: no easter egg opens now; the host carries the ignore and host marks
   const page = installPage();
   try {
     const g = game();
-    const em = embed(() => g.mount, { name: "swarm", palette: { sys: "#39ffb0", fire: "red;}body{x:y", nope: "#fff" } });
+    const em = embed(() => g.mount, { name: "mygame", palette: { sys: "#39ffb0", fire: "red;}body{x:y", nope: "#fff" } });
     await settle();
     assert.equal(g.mounts.length, 1);
     const host = g.mounts[0].host;
     assert.equal(host.parentNode, page.doc.body);
-    assert.equal(host.getAttribute("data-swarm-ignore"), "");
-    assert.equal(host.getAttribute("data-fizlet-host"), "swarm");
+    assert.equal(host.getAttribute("data-mygame-ignore"), "");
+    assert.equal(host.getAttribute("data-fizlet-host"), "mygame");
     assert.equal(host.style.getPropertyValue("--k-sys"), "#39ffb0");
     assert.equal(host.style.getPropertyValue("--k-fire"), "", "a colour that isn't a hex value never reaches the page");
     assert.equal(em.opened, true);
