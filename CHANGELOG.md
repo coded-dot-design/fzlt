@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.28.0
 
 - **Breaking: every storage key and page hook is named for Fizlet.** Renames, with no alias left
   behind (the older names are no longer read, matched or set):
