@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.28.1
 
 - **Fix: a finger with any pointer id holds a control, and a free control answers to none.**
   `@fzlt/core/pad` (the stick), `@fzlt/core/input` (the touch stick and the pointer) and
