@@ -86,6 +86,31 @@ async function padTest() {
   const none = await tp.evaluate(() => (e.advance(0), { active: c.stick.active, x: c.stick.x, knob: p.el.querySelector(".bui-knob").style.translate, down: p.el.querySelectorAll(".down").length }));
   assert.deepEqual(none, { active: false, x: 0, knob: "", down: 0 }, "the stick lets go and the knob returns");
 
+  // Any pointer id holds the stick (a phone can hand out negative ones), and no id means "no finger":
+  // with the stick free, a move from a pointer whose id is -1 steers nothing.
+  const ids = await tp.evaluate(() => {
+    const st = p.el.querySelector(".bui-stick"), r = st.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const ev = (type, id, dx) => st.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: id, pointerType: "touch", clientX: x + dx, clientY: y }));
+    const out = [];
+    ev("pointermove", -1, 30);
+    e.advance(0);
+    out.push(["stray", c.stick.active, c.stick.x]);
+    for (const id of [-2147483648, -7, -1, 0, 2147483647]) {
+      ev("pointerdown", id, 0);
+      ev("pointermove", id, 30);
+      e.advance(0);
+      const held = c.stick.active && c.stick.x > 0;
+      ev("pointermove", id === 0 ? 5 : 0, -30); // another finger's move never steers a held stick
+      e.advance(0);
+      const kept = c.stick.x > 0;
+      ev("pointerup", id, 30);
+      e.advance(0);
+      out.push([id, held, kept, c.stick.active, c.stick.x]);
+    }
+    return out;
+  });
+  assert.deepEqual(ids, [["stray", false, 0], ...[-2147483648, -7, -1, 0, 2147483647].map((id) => [id, true, true, false, 0])], "the stick is held by any pointer id, and by none when free");
+
   // D-pad: one finger, eight ways; a scheme swap mid-press lets go.
   await tp.evaluate(() => p.setScheme("dpad"));
   const [dx, dy, dw] = await centre(".bui-dpad");

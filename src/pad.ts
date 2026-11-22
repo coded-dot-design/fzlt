@@ -101,7 +101,7 @@ export function pad(e: Engine, c: Controls, o: PadOptions = {}) {
   // drawn (5, 6), and the pointer id holding it (7). The stick vector goes through v.
   const g = new Float64Array(9), v = new Float64Array(2);
   let pk: Element | null = null; // the key the last pointer pressed (its click is not a second tap)
-  g[7] = -1;
+  g[7] = NaN; // no finger: NaN equals no pointer id (a real id can be any integer, -1 included)
 
   const paint = (i: number, now: boolean) => {
     lit[i] = now ? 1 : 0;
@@ -133,7 +133,7 @@ export function pad(e: Engine, c: Controls, o: PadOptions = {}) {
     t.classList.remove("down");
     if (i) acts[+i]!.hold && c.press(acts[+i]!.intent, false);
     else if (d) c.press(move[+d]!, false);
-    else if (((g[7] = -1), knob)) c.steer(0, 0, false), (g[3] = g[4] = 0);
+    else if (((g[7] = NaN), knob)) c.steer(0, 0, false), (g[3] = g[4] = 0);
     else dir(0);
   };
   const release = () => el.querySelectorAll<HTMLElement>(".down").forEach(letGo);
