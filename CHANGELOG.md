@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.28.2
+
+- **Fix: a wheel over an animation or a game on a page scrolls the page.** (Owner, 2026-11-22: "make
+  sure the heroes and other animations don't block scrolling from the trackpad".) The Board UI kit
+  (`@fzlt/core/ui/board-ui.css`) set `overscroll-behavior: none` on slots (`.ae-slot`,
+  `[data-fizlet-slot]`, `[data-touch-lock="y"]`) and on game hosts (`[data-fizlet-host]`,
+  `[data-touch-lock]`). On a clipping box (`overflow: hidden`, as every slot is) Chromium reads it as
+  "keep the wheel": a trackpad or mouse wheel over a hero, a gallery piece or an embedded game moved
+  nothing. Both rules lose it; touch is as it was (slots `pan-y`: a vertical swipe scrolls the page,
+  only a sideways drag reaches the piece; hosts `none`; `lockTouch` still cancels pinch). No brick
+  listens to `wheel` or cancels it. No API change; JavaScript sizes unchanged.
+  - Test: `tests/wheel.mjs` (in `test:browser`): in Chromium a wheel over a clipping slot, a game
+    host and a turntable moves `window.scrollY`; on a phone a vertical swipe over the slot and the
+    turntable scrolls the page; the control (the old rule added back) keeps the wheel, so it can fail.
+
 ## 0.28.1
 
 - **Fix: a finger with any pointer id holds a control, and a free control answers to none.**
