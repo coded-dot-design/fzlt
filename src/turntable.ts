@@ -42,7 +42,7 @@ export interface TurntableOptions {
 // Slots of the state `s`, as literals named in a comment (src/kernel/engine.ts says why): 0 YAW, 1 VEL
 // (radians per second), 2 GOAL, 3 MODE (0 rest, 1 held, 2 coast, 3 ease, 4 show), 4 LEFT (seconds of
 // show), 5 DRAWN (the angle last handed to onTurn), 6 JUMP (reduced motion, latched), 7 X and 8 T (the
-// last drag sample: px and ms), 9 GRIP (the pointer id holding it, −1: none).
+// last drag sample: px and ms), 9 GRIP (the pointer id holding it, NaN: none).
 const TAU = Math.PI * 2;
 
 /** A turntable on `el`: drag it sideways (pointer capture, one pointer), or focus it and press ← → or
@@ -53,7 +53,7 @@ export function turntable(engine: Engine, el: HTMLElement | SVGElement, o: Turnt
   const s = new Float64Array(10), L = engine.ledger, onTurn = o.onTurn, label = o.label;
   s[0 /* YAW */] = s[2 /* GOAL */] = yaw0;
   s[5 /* DRAWN */] = NaN;
-  s[9 /* GRIP */] = -1;
+  s[9 /* GRIP */] = NaN;
   const mq = o.motion == null && typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
   const still = () => (mq ? mq.matches : o.motion === false);
 
@@ -135,7 +135,7 @@ export function turntable(engine: Engine, el: HTMLElement | SVGElement, o: Turnt
     /** Let go at time `ms`: coast when thrown (`friction`, motion on, moved in the last 0.1 s), else rest (on a step when snapping). */
     release(ms = 0) {
       if (s[3 /* MODE */] !== 1) return;
-      s[9 /* GRIP */] = -1;
+      s[9 /* GRIP */] = NaN;
       touch();
       if (friction > 0 && !s[6 /* JUMP */] && ms - s[8 /* T */]! < 100 && Math.abs(s[1 /* VEL */]!) > 0.3) s[3 /* MODE */] = 2;
       else settle();
@@ -181,7 +181,7 @@ export function turntable(engine: Engine, el: HTMLElement | SVGElement, o: Turnt
   const on = { signal: engine.signal };
   el.addEventListener("pointerdown", (ev) => {
     const e = ev as PointerEvent;
-    if (e.button > 0 || s[9 /* GRIP */]! >= 0) return;
+    if (e.button > 0 || s[9 /* GRIP */]! === s[9 /* GRIP */]!) return;
     s[9 /* GRIP */] = e.pointerId;
     try {
       el.setPointerCapture(e.pointerId);

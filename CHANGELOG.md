@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- **Fix: a finger with any pointer id holds a control, and a free control answers to none.**
+  `@fzlt/core/pad` (the stick), `@fzlt/core/input` (the touch stick and the pointer) and
+  `@fzlt/core/turntable` (the grip) marked "no finger" with the id -1 and, in two places, read a
+  negative id as "free". A phone can hand out negative pointer ids: a second finger could then take
+  a held stick, a turntable could be gripped twice, and with nothing held a move from a pointer
+  whose id is -1 steered the stick. "No finger" is now a value no id equals. No API change; sizes
+  within budget (pad 2,069 B, input 1,912 B, turntable 1,393 B, page build 7,103 B gzip).
+  - Test: `tests/browser.mjs` presses, moves and lifts the pad's stick with ids -2147483648, -7, -1,
+    0 and 2147483647, and sends a stray move with id -1 while it is free (it failed before the fix).
+
 ## 0.28.0
 
 - **Breaking: every storage key and page hook is named for Fizlet.** Renames, with no alias left
