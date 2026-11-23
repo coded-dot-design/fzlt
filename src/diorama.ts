@@ -9,7 +9,7 @@
  *   rest. `below` puts the faces under a cut plane on their own layer (hulls under water).
  * - Points (sparks, shells, smoke) and decals go into the same sort, so effects sit between faces;
  *   a pool with `rank: "depth"` sorts each point among the clusters by its own depth.
- * - Limits: faces are never split, so two faces that cross each other, or a big face beside a small
+ * - Limits: faces are never split (pass `exact`, `@fzlt/core/diorama-exact`, to cut crossing ones), so two faces that cross each other, or a big face beside a small
  *   one at the wrong depth, can draw in the wrong order: split them into parts, or order them with
  *   clusters and layers. A face with a vertex behind the camera is dropped, not clipped.
  * - Pools: there is no `remove`; add a fixed pool up front and let go of an object (a composite with
@@ -250,7 +250,20 @@ export interface DioramaOptions {
   maxFaces?: number;
   /** Blob shadows per frame (default 512). */
   maxShadows?: number;
+  /** A pass that sees the sorted faces and paints after any of them, e.g. `exact()` from
+   *  `@fzlt/core/diorama-exact` (split crossing faces: an exact painter's order). Pay for what you use. */
+  exact?: (f: DioramaFaces) => DioramaPass;
 }
+/** What an `exact` pass reads: screen vertices (x, y, view depth), each entry's kind, object, face and
+ *  shade level, the objects, and the diorama's shade strings. Live arrays: read them, never write. */
+export interface DioramaFaces {
+  SV: Float64Array; KIND: Uint8Array; FOBJ: Int32Array; FIDX: Int32Array; FLVL: Uint8Array;
+  objs: readonly { mesh: { fs: Int32Array; fc: Int32Array; fv: Int32Array }; vb: number; i: number; color: string; et: string | null }[];
+  shade: (col: string, lvl: number) => string; edge: boolean;
+}
+/** An `exact` pass: `s` after the sort (n entries in paint order `ord`; `ea` the alpha per object), `p`
+ *  after the face at paint position q is painted. */
+export interface DioramaPass { s(n: number, ord: Uint32Array, ea: Float64Array): void; p(ctx: CanvasRenderingContext2D, q: number): void }
 
 interface Mesh { nv: number; v: Float64Array; nf: number; fs: Int32Array; fc: Int32Array; fv: Int32Array; nrm: Float64Array; cen: Float64Array }
 interface Cluster { name: string; fixed: number | null; at: ArrayLike<number> | null; follow: Obj | null; ci: number }
@@ -345,6 +358,7 @@ export function diorama(canvas: HTMLCanvasElement, o: DioramaOptions = {}) {
   let amb = 0.56, nf = 0, nv = 0, W = 1, H = 1, dpr = 1;
   const cam: DioramaCamera = { yaw: -0.5, pitch: 0.85, dist: 30, tx: 0, ty: 0, tz: 0, ox: 0, oy: 0, fov: 0.62 };
   const stats = { faces: 0, shadows: 0, points: 0, verts: 0, objects: 0, dropped: 0 };
+  const X = o.exact && o.exact({ SV, KIND, FOBJ, FIDX, FLVL, objs, shade, edge: o.edge !== false });
 
   function setLight(v: ArrayLike<number>, a = amb) {
     const l = len3(v[0]!, v[1]!, v[2]!) || 1;
@@ -728,6 +742,7 @@ export function diorama(canvas: HTMLCanvasElement, o: DioramaOptions = {}) {
         ctx.fillStyle = shade(col, lv);
         ctx.fill();
         if (o.edge !== false && ea > 0.95) (ctx.strokeStyle = shade(col, lv > 5 ? lv - 5 : 0)), (ctx.lineWidth = 0.9), ctx.stroke();
+        X && X.p(ctx, q);
       }
     }
     ctx.globalAlpha = 1;
@@ -741,6 +756,7 @@ export function diorama(canvas: HTMLCanvasElement, o: DioramaOptions = {}) {
     shadows();
     extras();
     sortKeys(nf);
+    X && X.s(nf, ORD, EA);
     paint();
     if (o.overlay) o.overlay(ctx, api);
     stats.faces = N[0]!;
