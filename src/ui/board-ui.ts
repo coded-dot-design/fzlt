@@ -84,15 +84,23 @@ export function readouts(parent: HTMLElement, items: [label: string, tone?: "tea
   return { group, values };
 }
 
+/** Surfaces that take every touch (the kit's touch-action: none): a key there may keep the finger. */
+const GAME = "[data-fizlet-host],[data-touch-lock],.bui-pad";
+
 /**
  * A press that fires once per touch, mouse or keyboard activation, and never loses to a second
- * finger already on the stick. Touch fires on touchstart (no 300ms wait); the click that may
- * follow an uncancellable touch is skipped. Run your state change and repaint synchronously in
- * fn: a frame between release and the new pressed state makes the key bounce.
+ * finger already on the stick. In a game surface (a game host, a touch-locked box, the pad) touch
+ * fires on touchstart and the click that may follow an uncancellable touch is skipped. Anywhere
+ * else, a page key, one finger fires on the tap's click (the kit's touch-action: manipulation: no
+ * 300ms wait), so a swipe that starts on the key scrolls the page and presses nothing; a second
+ * finger still fires at once. Run your state change and repaint synchronously in fn: a frame
+ * between release and the new pressed state makes the key bounce.
  */
 export function press(el: HTMLElement, fn: () => void, signal: AbortSignal) {
-  let touched = 0;
+  let touched = 0, game = -1; // in a game surface: read once, at the first touch (keys are often made before they are placed)
   el.addEventListener("touchstart", (e) => {
+    if (game < 0) game = +!!el.closest(GAME);
+    if (!game && e.touches.length < 2) return; // a page key: the click presses it
     if (e.cancelable) e.preventDefault();
     else touched = performance.now();
     fn();

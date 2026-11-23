@@ -94,12 +94,16 @@ test("ui: readouts builds labelled values in order, with tones", () => {
 test("ui: press fires once per touch (the click after it is skipped) and once per click; Recall removes it", () => {
   const page = installPage();
   try {
-    const el = page.doc.createElement("button"), ctl = new AbortController();
+    // A key in a game surface: the press is the touchstart.
+    const host = page.doc.createElement("div"), ctl = new AbortController();
+    host.setAttribute("data-fizlet-host", "game");
+    const el = host.appendChild(page.doc.createElement("button")), one = [{}];
     let n = 0;
     ui.press(el, () => n++, ctl.signal);
-    el.dispatch("touchstart", { cancelable: true });
+    const t = el.dispatch("touchstart", { cancelable: true, touches: one });
     assert.equal(n, 1);
-    el.dispatch("touchstart", { cancelable: false }); // uncancellable: a click follows
+    assert.equal(t.defaultPrevented, true, "it keeps the finger");
+    el.dispatch("touchstart", { cancelable: false, touches: one }); // uncancellable: a click follows
     el.dispatch("click");
     assert.equal(n, 2, "the click after an uncancellable touch is the same press");
     el.dispatch("click");
@@ -108,6 +112,18 @@ test("ui: press fires once per touch (the click after it is skipped) and once pe
     assert.equal(el.count(), 0);
     el.dispatch("click");
     assert.equal(n, 3);
+    // A key on a page: one finger leaves the touch to the page (a swipe scrolls it); the tap's click presses.
+    const key = page.doc.createElement("button"), c2 = new AbortController();
+    let m = 0;
+    ui.press(key, () => m++, c2.signal);
+    const p = key.dispatch("touchstart", { cancelable: true, touches: one });
+    assert.equal(m, 0, "a touch alone presses nothing");
+    assert.notEqual(p.defaultPrevented, true, "and is not cancelled");
+    key.dispatch("click");
+    assert.equal(m, 1, "the tap's click presses it once");
+    key.dispatch("touchstart", { cancelable: true, touches: [{}, {}] });
+    assert.equal(m, 2, "a second finger presses at once");
+    c2.abort();
   } finally {
     page.restore();
   }
@@ -195,7 +211,8 @@ test("ui: zero allocation on the press paths (touches, clicks, keys outside a ke
     ui.pressCue(root, ctl.signal);
     ui.press(btn, () => n++, ctl.signal);
     const fns = [...root.listeners, ...btn.listeners].map((l) => l.fn);
-    const ev = { key: "Enter", target: plain, cancelable: true, preventDefault() {} };
+    btn.closest = () => btn; // in a game surface (the press path that runs fn at touchstart)
+    const ev = { key: "Enter", target: plain, cancelable: true, touches: [{}], preventDefault() {} };
     const run = (n) => {
       for (let i = 0; i < n; i++) for (let k = 0; k < fns.length; k++) fns[k](ev);
     };
