@@ -115,9 +115,10 @@ export const BUDGETS = [
   // box per frame: a face pair is tested only when no plane between the two boxes has the eye on the
   // later one's side (day loop: 4,115 → 955 pairs a frame, pass 0.85 → 0.58 ms in Node; wrong px the
   // same). 2,413 B (+203 B) with a part's paints (shadows, points, decals after its faces) painted
-  // again, clipped, over its pieces: a piece no longer covers the light or a shadow on its part.
-  // Budget 2,048 → 2,432 by those needs, pending the owner's call.
-  ["@fzlt/core/diorama-exact", "src/diorama-exact.ts", 2432],
+  // again, clipped, over its pieces: a piece no longer covers the light or a shadow on its part;
+  // 2,442 B with that repaint in a function of its own (the site's day loop: 0 young GCs, was 7).
+  // Budget 2,048 → 2,448 by those needs, pending the owner's call.
+  ["@fzlt/core/diorama-exact", "src/diorama-exact.ts", 2448],
   // Seeded dice for tabletop games (diorama is a type-only import; steer's exact hypot): 4,264 B gz
   // when added, with dioramaDice and popDome; roll alone 325 B, dice() 1,920 B (they tree-shake).
   ["@fzlt/core/dice", "src/dice.ts", 4352],

@@ -129,6 +129,18 @@ export function exact(o: ExactOptions = {}) {
       PL[np * 3] = ah; PL[np * 3 + 1] = bh; PL[np * 3 + 2] = chh;
       return finish(np, false) ? 1 : 0;
     }
+    /** Paint piece g's part's paints (from paint position k, before q) again, inside piece g. A
+     *  function of its own, so the paint loop stays small enough for its calls to be inlined (a
+     *  number passed to a call that is not inlined is boxed: a young-generation allocation). */
+    function again(ctx: CanvasRenderingContext2D, g: number, k: number, q: number) {
+      const n = PN[g]!, o0 = g * MV;
+      ctx.save();
+      ctx.beginPath();
+      for (let v = 0; v < n; v++) v ? ctx.lineTo(PX[o0 + v]!, PY[o0 + v]!) : ctx.moveTo(PX[o0]!, PY[o0]!);
+      ctx.clip();
+      for (; k >= 0 && k < q; k = NQ[k]!) run(k, k + 1);
+      ctx.restore();
+    }
     return {
       s(n, ord, ea) {
         if (S0.length < n) (S0 = new Int32Array(ord.length)), (S1 = new Int32Array(ord.length));
@@ -230,14 +242,7 @@ export function exact(o: ExactOptions = {}) {
           }
           // What was painted on its part (shadows, points, decals right after the part's faces) goes on
           // again inside the piece, so a piece never covers the light or a shadow it carries.
-          if ((k = HP[ob.i]!) >= 0 && k < q) {
-            ctx.save();
-            ctx.beginPath();
-            for (let v = 0; v < n; v++) v ? ctx.lineTo(PX[o0 + v]!, PY[o0 + v]!) : ctx.moveTo(PX[o0]!, PY[o0]!);
-            ctx.clip();
-            for (; k >= 0 && k < q; k = NQ[k]!) run(k, k + 1);
-            ctx.restore();
-          }
+          if (HP[ob.i]! >= 0 && HP[ob.i]! < q) again(ctx, g, HP[ob.i]!, q);
         }
       },
     };
