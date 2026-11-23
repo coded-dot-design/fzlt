@@ -103,8 +103,22 @@ export const BUDGETS = [
   // With `glide` (ease the camera to a goal, field by field; tree-shakes): 7,456 B (+198 B: nine named
   // fields, as a keyed loop over them boxed a number per store); budget raised from 7,296 by that need.
   // diorama() alone stays 6,613 B.
-  ["@fzlt/core/diorama", "src/diorama.ts", 7488],
-  ["@fzlt/core/diorama (diorama() alone)", "scripts/diorama-card.ts", 6656],
+  // With the `exact` hook (prototype A: a pass that sees the sorted faces and paints after any of
+  // them; its inputs as one tuple, and `run(a, b)`, the paint loop as a function the pass calls to
+  // paint a part's paints again over its pieces): 7,515 B (+60 B), diorama() alone 6,675 B (+63 B).
+  // Budgets raised 32 B each by that need (was +64 B with an object of named inputs), pending the owner.
+  ["@fzlt/core/diorama", "src/diorama.ts", 7520],
+  ["@fzlt/core/diorama (diorama() alone)", "scripts/diorama-card.ts", 6688],
+  // Exact painter's order for a diorama (opt-in, prototype A): crossing faces cut where they are
+  // equally near, pieces painted again after the face they pass; a 64 px tile grid finds the pairs.
+  // 2,023 B gz when added (diorama is a type-only import). 2,210 B (+187 B) with each object's world
+  // box per frame: a face pair is tested only when no plane between the two boxes has the eye on the
+  // later one's side (day loop: 4,115 → 955 pairs a frame, pass 0.85 → 0.58 ms in Node; wrong px the
+  // same). 2,413 B (+203 B) with a part's paints (shadows, points, decals after its faces) painted
+  // again, clipped, over its pieces: a piece no longer covers the light or a shadow on its part;
+  // 2,442 B with that repaint in a function of its own (the site's day loop: 0 young GCs, was 7).
+  // Budget 2,048 → 2,448 by those needs, pending the owner's call.
+  ["@fzlt/core/diorama-exact", "src/diorama-exact.ts", 2448],
   // Seeded dice for tabletop games (diorama is a type-only import; steer's exact hypot): 4,264 B gz
   // when added, with dioramaDice and popDome; roll alone 325 B, dice() 1,920 B (they tree-shake).
   ["@fzlt/core/dice", "src/dice.ts", 4352],

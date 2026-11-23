@@ -9,7 +9,7 @@
  *   rest. `below` puts the faces under a cut plane on their own layer (hulls under water).
  * - Points (sparks, shells, smoke) and decals go into the same sort, so effects sit between faces;
  *   a pool with `rank: "depth"` sorts each point among the clusters by its own depth.
- * - Limits: faces are never split, so two faces that cross each other, or a big face beside a small
+ * - Limits: faces are never split (pass `exact`, `@fzlt/core/diorama-exact`, to cut crossing ones), so two faces that cross each other, or a big face beside a small
  *   one at the wrong depth, can draw in the wrong order: split them into parts, or order them with
  *   clusters and layers. A face with a vertex behind the camera is dropped, not clipped.
  * - Pools: there is no `remove`; add a fixed pool up front and let go of an object (a composite with
@@ -250,6 +250,27 @@ export interface DioramaOptions {
   maxFaces?: number;
   /** Blob shadows per frame (default 512). */
   maxShadows?: number;
+  /** A pass that sees the sorted faces and paints after any of them, e.g. `exact()` from
+   *  `@fzlt/core/diorama-exact` (split crossing faces: an exact painter's order). Pay for what you use. */
+  exact?: (f: DioramaFaces, o: DioramaOptions) => DioramaPass;
+}
+/** What an `exact` pass reads, in this order: screen vertices (x, y, view depth), each entry's kind,
+ *  object, face and shade level, the objects, the diorama's shade strings, the camera (its first
+ *  three entries: the eye, in world space) and a painter of one entry. Live arrays: read them, never write. */
+export type DioramaFaces = readonly [
+  SV: Float64Array, KIND: Uint8Array, FOBJ: Int32Array, FIDX: Int32Array, FLVL: Uint8Array,
+  objs: readonly { mesh: { nv: number; v: Float64Array; fs: Int32Array; fc: Int32Array; fv: Int32Array }; M: Float64Array; vb: number; i: number; color: string; et: string | null }[],
+  shade: (col: string, lvl: number) => string, B: Float64Array,
+  /** Paint the entries at paint positions a to b (not b). */
+  run: (a: number, b: number) => void,
+];
+/** An `exact` pass: `s` after the sort (n entries in paint order `ord`; `ea` the alpha per object), `p`
+ *  after the face at paint position q is painted. */
+export interface DioramaPass {
+  /** After the sort: n entries in paint order `ord`; `ea` the alpha per object. */
+  s(n: number, ord: Uint32Array, ea: Float64Array): void;
+  /** After the face at paint position q is painted. */
+  p(ctx: CanvasRenderingContext2D, q: number): void;
 }
 
 interface Mesh { nv: number; v: Float64Array; nf: number; fs: Int32Array; fc: Int32Array; fv: Int32Array; nrm: Float64Array; cen: Float64Array }
@@ -345,6 +366,7 @@ export function diorama(canvas: HTMLCanvasElement, o: DioramaOptions = {}) {
   let amb = 0.56, nf = 0, nv = 0, W = 1, H = 1, dpr = 1;
   const cam: DioramaCamera = { yaw: -0.5, pitch: 0.85, dist: 30, tx: 0, ty: 0, tz: 0, ox: 0, oy: 0, fov: 0.62 };
   const stats = { faces: 0, shadows: 0, points: 0, verts: 0, objects: 0, dropped: 0 };
+  const X = o.exact?.([SV, KIND, FOBJ, FIDX, FLVL, objs, shade, B, run], o);
 
   function setLight(v: ArrayLike<number>, a = amb) {
     const l = len3(v[0]!, v[1]!, v[2]!) || 1;
@@ -699,7 +721,12 @@ export function diorama(canvas: HTMLCanvasElement, o: DioramaOptions = {}) {
     if (bg) (ctx.fillStyle = typeof bg === "function" ? bg() : bg), ctx.fillRect(0, 0, W, H);
     else ctx.clearRect(0, 0, W, H);
     ctx.lineJoin = "round";
-    for (let q = 0; q < nf; q++) {
+    run(0, nf);
+    ctx.globalAlpha = 1;
+  }
+  /** Paint the entries at paint positions a to b (an `exact` pass paints a part's paints again over its pieces). */
+  function run(a: number, b: number) {
+    for (let q = a; q < b; q++) {
       const e = ORD[q]!, kind = KIND[e];
       if (kind === 3) (ctx.globalAlpha = 1), decals[FIDX[e]!]!.fn(ctx);
       else if (kind === 2) {
@@ -728,9 +755,9 @@ export function diorama(canvas: HTMLCanvasElement, o: DioramaOptions = {}) {
         ctx.fillStyle = shade(col, lv);
         ctx.fill();
         if (o.edge !== false && ea > 0.95) (ctx.strokeStyle = shade(col, lv > 5 ? lv - 5 : 0)), (ctx.lineWidth = 0.9), ctx.stroke();
+        X?.p(ctx, q);
       }
     }
-    ctx.globalAlpha = 1;
   }
   function draw() {
     sync();
@@ -741,6 +768,7 @@ export function diorama(canvas: HTMLCanvasElement, o: DioramaOptions = {}) {
     shadows();
     extras();
     sortKeys(nf);
+    X?.s(nf, ORD, EA);
     paint();
     if (o.overlay) o.overlay(ctx, api);
     stats.faces = N[0]!;

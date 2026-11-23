@@ -156,6 +156,10 @@
       "types": "./dist/diorama.d.ts",
       "default": "./dist/diorama.js"
     },
+    "./diorama-exact": {
+      "types": "./dist/diorama-exact.d.ts",
+      "default": "./dist/diorama-exact.js"
+    },
     "./dice": {
       "types": "./dist/dice.d.ts",
       "default": "./dist/dice.js"

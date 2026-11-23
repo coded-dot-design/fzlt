@@ -219,8 +219,8 @@ fit(cam, l, t, r - l, b - t); // frame it with @fzlt/core/camera` },
     snippet: `const v = viewCanvas(e, diagram, { label: "Brick graph", draw(ctx, box) { paint(ctx); } });
 box.set([x - 12, y - 12, 24, 24]); // a node moved: [x, y, w, h], CSS px
 v.dirty(box); // only those device pixels are cleared and redrawn; v.dirty() is all of it` },
-  { id: "diorama", no: 28, sym: "dr", family: "render", status: "experimental", since: "0.22.0", tests: ["diorama.test.mjs", "diorama-glide.test.mjs", "diorama.mjs"], used: ["Salvo Bay prototype (gallery piece to follow)"], why: "New: software 3D for tabletop scenes, lifted from the Salvo Bay prototype; its API may still change before a gallery piece ships on it.",
-    tag: "DIORAMA", role: "fire", modules: [mod("@fzlt/core/diorama", "diorama")],
+  { id: "diorama", no: 28, sym: "dr", family: "render", status: "experimental", since: "0.22.0", tests: ["diorama.test.mjs", "diorama-glide.test.mjs", "diorama-exact.test.mjs", "diorama.mjs"], used: ["Salvo Bay prototype (gallery piece to follow)"], why: "New: software 3D for tabletop scenes, lifted from the Salvo Bay prototype; its API may still change before a gallery piece ships on it.",
+    tag: "DIORAMA", role: "fire", modules: [mod("@fzlt/core/diorama", "diorama"), mod("@fzlt/core/diorama-exact", "diorama-exact")],
     snippet: `const d = diorama(canvas, { background: "#efe8de" }); // a canvas you own, no WebGL
 d.add({ id: "table", size: [10, 0.4, 7], color: "#c69a6f" });
 d.add({ id: "boat", size: [2, 0.6, 0.8], on: "table", color: "#e04a3a", shadow: 0.3 });
