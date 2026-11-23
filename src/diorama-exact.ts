@@ -9,9 +9,11 @@
  *   is checked the same way; when no earlier piece is nearer than a later one anywhere they overlap,
  *   the last paint at every pixel is the nearest face: exact, crossing faces included, with no order
  *   to find and no cycle to break.
- * - A piece is filled with its face's shade and stroked only along its face's own edges.
+ * - A piece is filled with its face's shade and stroked only along its face's own edges (none kept:
+ *   no stroke). What was painted on its part (the entries that are not faces after one of the part's
+ *   faces: shadows, points, decals, e.g. a light pool) is painted again inside the piece (a clip).
  * - Limits: convex faces of at most 32 vertices take part (others paint as they are); shadows, points
- *   and decals keep the diorama's order; a see-through face's piece blends twice (`alpha` leaves them out). `cap` pieces per frame (faces
+ *   and decals keep the diorama's order (but go on again over their part's pieces); a see-through face's piece blends twice (`alpha` leaves them out). `cap` pieces per frame (faces
  *   included); past it the rest keep the diorama's order (counted in `stats.full`).
  * - Pairs: a face is checked only against faces of other objects that could hide it: when a plane
  *   between the two objects' world boxes has the eye on the later one's side, every ray meets the
@@ -84,10 +86,10 @@ export function exact(o: ExactOptions = {}) {
     SG[g] = ar > 0 ? 1 : -1;
     return Math.abs(ar) > (fit ? 1e-6 : 1);
   }
-  const fn = ([SV, KIND, FOBJ, FIDX, FLVL, objs, shade, E]: DioramaFaces, d: DioramaOptions): DioramaPass => {
+  const fn = ([SV, KIND, FOBJ, FIDX, FLVL, objs, shade, E, run]: DioramaFaces, d: DioramaOptions): DioramaPass => {
     const edge = d.edge !== false;
     // Each object's world box this frame (x0 y0 z0 x1 y1 z1), grown with the scene, never per draw.
-    let WB = new Float64Array(0);
+    let WB = new Float64Array(0), HP = new Int32Array(0), NQ = HP;
     /** Can object a, painted first, hide part of object b? Not when a plane between their world boxes
      *  has the eye on b's side (every ray meets b first): the sort's order of the two is exact. */
     function can(a: number, b: number) {
@@ -130,7 +132,17 @@ export function exact(o: ExactOptions = {}) {
     return {
       s(n, ord, ea) {
         if (S0.length < n) (S0 = new Int32Array(ord.length)), (S1 = new Int32Array(ord.length));
-        if (objs.length * 6 > WB.length) WB = new Float64Array(objs.length * 12);
+        if (objs.length * 6 > WB.length) (WB = new Float64Array(objs.length * 12)), (HP = new Int32Array(objs.length * 4));
+        if (NQ.length < ord.length) NQ = new Int32Array(ord.length);
+        // Each part's paints: the entries that are not faces, after one of its faces and before the
+        // next face, in paint order (HP: the first, then NQ; HP's second half: the last).
+        HP.fill(-1);
+        for (let q = 0, l = -1, T = objs.length; q < n; q++) {
+          const e = ord[q]!;
+          if (!KIND[e]) l = FOBJ[e]!;
+          else if (l >= 0) (NQ[q] = -1), HP[l]! < 0 ? (HP[l] = q) : (NQ[HP[T + l]!] = q), (HP[T + l] = q);
+        }
+
         // Each object's world box this frame, from its vertices under M (rows m[0..8], then the move).
         for (let i = 0; i < objs.length; i++) {
           const { mesh: me, M: m } = objs[i]!;
@@ -197,19 +209,34 @@ export function exact(o: ExactOptions = {}) {
       },
       p(ctx, q) {
         for (let g = S0[q]!; g < S1[q]!; g++) {
-          const e = PO[g]!, ob = objs[FOBJ[e]!]!, col = ob.et || ob.color, lv = FLVL[e]!, n = PN[g]!, o0 = g * MV;
-          ctx.globalAlpha = EA[FOBJ[e]!]!;
+          const e = PO[g]!, ob = objs[FOBJ[e]!]!, col = ob.et || ob.color, lv = FLVL[e]!, n = PN[g]!, o0 = g * MV, a = EA[FOBJ[e]!]!;
+          let k = 0;
+          ctx.globalAlpha = a;
           ctx.beginPath();
-          for (let k = 0; k < n; k++) k ? ctx.lineTo(PX[o0 + k]!, PY[o0 + k]!) : ctx.moveTo(PX[o0]!, PY[o0]!);
+          for (; k < n; k++) k ? ctx.lineTo(PX[o0 + k]!, PY[o0 + k]!) : ctx.moveTo(PX[o0]!, PY[o0]!);
           ctx.closePath();
           ctx.fillStyle = shade(col, lv);
           ctx.fill();
-          if (edge) {
+          // The face's own edges it keeps, stroked as the face is (none: no stroke).
+          if (edge && a > 0.95) {
+            for (k = 0; k < n && !PE[o0 + k]; ) k++;
+            if (k < n) {
+              ctx.beginPath();
+              for (k = 0; k < n; k++) if (PE[o0 + k]) { const k1 = o0 + ((k + n - 1) % n); ctx.moveTo(PX[k1]!, PY[k1]!); ctx.lineTo(PX[o0 + k]!, PY[o0 + k]!); }
+              ctx.strokeStyle = shade(col, lv > 5 ? lv - 5 : 0);
+              ctx.lineWidth = 0.9;
+              ctx.stroke();
+            }
+          }
+          // What was painted on its part (shadows, points, decals right after the part's faces) goes on
+          // again inside the piece, so a piece never covers the light or a shadow it carries.
+          if ((k = HP[ob.i]!) >= 0 && k < q) {
+            ctx.save();
             ctx.beginPath();
-            for (let k = 0; k < n; k++) if (PE[o0 + k]) { const k1 = o0 + ((k + n - 1) % n); ctx.moveTo(PX[k1]!, PY[k1]!); ctx.lineTo(PX[o0 + k]!, PY[o0 + k]!); }
-            ctx.strokeStyle = shade(col, lv > 5 ? lv - 5 : 0);
-            ctx.lineWidth = 0.9;
-            ctx.stroke();
+            for (let v = 0; v < n; v++) v ? ctx.lineTo(PX[o0 + v]!, PY[o0 + v]!) : ctx.moveTo(PX[o0]!, PY[o0]!);
+            ctx.clip();
+            for (; k >= 0 && k < q; k = NQ[k]!) run(k, k + 1);
+            ctx.restore();
           }
         }
       },

@@ -20,6 +20,9 @@ class FakeCtx {
   closePath() {}
   fill() { if (this.rec) this.rec.push({ style: this.fillStyle, pts: this.path }); }
   stroke() {}
+  save() { this.saved = (this.saved || 0) + 1; }
+  clip() { this.clips = (this.clips || 0) + 1; }
+  restore() {}
 }
 function scene(withExact, record = true) {
   const fills = [], ctx = new FakeCtx(record ? fills : null), canvas = { clientWidth: 400, clientHeight: 300, width: 0, height: 0, getContext: () => ctx };
@@ -52,6 +55,22 @@ test("crossing faces: each slab is on top on its own side of the crossing", () =
     assert.notEqual(a, b, `yaw ${yaw}: a different slab is nearest left and right of the crossing`);
     assert.ok(x.stats.pieces > 0, "pieces were cut");
   }
+});
+
+test("a part's paints go on again over its pieces (a light or a shadow on it stays on top)", () => {
+  const fills = [], ctx = new FakeCtx(fills), canvas = { clientWidth: 400, clientHeight: 300, width: 0, height: 0, getContext: () => ctx };
+  const x = exact(), d = diorama(canvas, { exact: x, edge: false });
+  Object.assign(d.cam, { yaw: 0, pitch: 0.3, dist: 20, tx: 0, ty: 1, tz: 0, ox: 0, oy: 0, fov: 0.8 });
+  // Red first with a paint on it (layer 1), then blue, crossing red: red's pieces go over blue.
+  d.cluster("c", { at: [0, 0, 0] });
+  d.add({ id: "red", size: [6, 2, 0.2], rot: [0, 0.6, 0], color: "#ff0000", emissive: true, cluster: "c", layer: 0 });
+  d.add({ id: "blue", size: [6, 2, 0.2], rot: [0, -0.6, 0], color: "#0000ff", emissive: true, cluster: "c", layer: 2 });
+  let painted = 0;
+  d.decal("c", 1, () => painted++);
+  d.draw();
+  assert.ok(x.stats.pieces > 0, "red was cut");
+  assert.ok(painted >= 2, `the paint went on again (${painted})`);
+  assert.equal(ctx.clips, painted - 1, "each time inside a piece");
 });
 
 test("faces that do not cross: no pieces, and boxes a plane parts: no pairs", () => {
