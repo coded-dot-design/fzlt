@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- **Fix: a swipe that starts on a page key scrolls the page.** `@fzlt/core/ui`'s `press()` cancelled
+  every touchstart on its key, so on a site the page never moved under a finger that landed on a
+  key (fizlet.com's home demo and brick cards; owner, 2026-11-22: a section of a page never blocks
+  scrolling). Outside a game surface (`[data-fizlet-host]`, `[data-touch-lock]`) one
+  finger now presses on the tap's click (the kit's `touch-action: manipulation`: no 300 ms wait),
+  and a swipe presses nothing; in a game surface, and for a second finger, the press still fires on
+  touchstart and keeps the finger. No API change. `@fzlt/core/ui` js 2,940 B gzip (budget 2,944).
+  - Test: `tests/press.mjs` (in `test:browser`): on a phone, a swipe from a page key scrolls the page
+    and presses nothing, a tap presses it once, a game host's key presses on touchstart and keeps the
+    finger; the old press is the control (the swipe keeps the page still).
+
 ## 0.28.1
 
 - **Fix: a finger with any pointer id holds a control, and a free control answers to none.**
