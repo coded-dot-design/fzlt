@@ -13,10 +13,14 @@
  * - Limits: convex faces of at most 32 vertices take part (others paint as they are); shadows, points
  *   and decals keep the diorama's order; a see-through face's piece blends twice (`alpha` leaves them out). `cap` pieces per frame (faces
  *   included); past it the rest keep the diorama's order (counted in `stats.full`).
- * - No allocation per draw (typed arrays sized once). Cost: every pair of faces whose screen boxes
- *   meet, each frame.
+ * - Pairs: a face is checked only against faces of other objects that could hide it: when a plane
+ *   between the two objects' world boxes has the eye on the later one's side, every ray meets the
+ *   later one first and the sort's order of the two is already exact (skipped). Each world box is
+ *   taken from the object's vertices every frame.
+ * - No allocation per draw (typed arrays sized once, grown with the scene). Cost: every pair of faces
+ *   whose screen boxes meet and whose objects' boxes overlap (or are in the wrong order), each frame.
  */
-import type { DioramaFaces, DioramaPass } from "./diorama";
+import type { DioramaFaces, DioramaOptions, DioramaPass } from "./diorama";
 
 /** Options for `exact`. */
 export interface ExactOptions {
@@ -80,8 +84,19 @@ export function exact(o: ExactOptions = {}) {
     SG[g] = ar > 0 ? 1 : -1;
     return Math.abs(ar) > (fit ? 1e-6 : 1);
   }
-  const fn = (F: DioramaFaces): DioramaPass => {
-    const { SV, KIND, FOBJ, FIDX, FLVL, objs, shade, edge } = F;
+  const fn = ([SV, KIND, FOBJ, FIDX, FLVL, objs, shade, E]: DioramaFaces, d: DioramaOptions): DioramaPass => {
+    const edge = d.edge !== false;
+    // Each object's world box this frame (x0 y0 z0 x1 y1 z1), grown with the scene, never per draw.
+    let WB = new Float64Array(0);
+    /** Can object a, painted first, hide part of object b? Not when a plane between their world boxes
+     *  has the eye on b's side (every ray meets b first): the sort's order of the two is exact. */
+    function can(a: number, b: number) {
+      for (let k = 0; k < 3; k++) {
+        const a0 = WB[a * 6 + k]!, a1 = WB[a * 6 + 3 + k]!, b0 = WB[b * 6 + k]!, b1 = WB[b * 6 + 3 + k]!;
+        if ((a1 <= b0 + tol && E[k]! > a1) || (b1 <= a0 + tol && E[k]! < a0)) return false;
+      }
+      return true;
+    }
     /** Does earlier piece h hide part of later piece w? Then its piece goes at the end (np). */
     function test(h: number, w: number, np: number) {
       stats.pairs++;
@@ -115,6 +130,16 @@ export function exact(o: ExactOptions = {}) {
     return {
       s(n, ord, ea) {
         if (S0.length < n) (S0 = new Int32Array(ord.length)), (S1 = new Int32Array(ord.length));
+        if (objs.length * 6 > WB.length) WB = new Float64Array(objs.length * 12);
+        // Each object's world box this frame, from its vertices under M (rows m[0..8], then the move).
+        for (let i = 0; i < objs.length; i++) {
+          const { mesh: me, M: m } = objs[i]!;
+          for (let a = 0; a < 3; a++) {
+            let lo = Infinity, hi = -Infinity;
+            for (let v = 0; v < me.nv * 3; v += 3) { const x = m[9 + a]! + m[a * 3]! * me.v[v]! + m[a * 3 + 1]! * me.v[v + 1]! + m[a * 3 + 2]! * me.v[v + 2]!; (lo = Math.min(lo, x)), (hi = Math.max(hi, x)); }
+            (WB[i * 6 + a] = lo), (WB[i * 6 + 3 + a] = hi);
+          }
+        }
         EA = ea;
         stats.pieces = stats.pairs = stats.full = 0;
         let np = 0, nn = 0, nb = 0;
@@ -156,7 +181,7 @@ export function exact(o: ExactOptions = {}) {
                   const h = big ? BIG[k]! : NF[k]!, j = h * 4;
                   if (ST[h] === st) continue;
                   ST[h] = st;
-                  if (PB[h] !== ow && BB[j]! < x1 && BB[j + 1]! > x0 && BB[j + 2]! < y1 && BB[j + 3]! > y0) np += test(h, w, np);
+                  if (PB[h] !== ow && BB[j]! < x1 && BB[j + 1]! > x0 && BB[j + 2]! < y1 && BB[j + 3]! > y0 && can(PB[h]!, ow)) np += test(h, w, np);
                 }
               }
           }

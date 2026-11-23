@@ -54,7 +54,7 @@ test("crossing faces: each slab is on top on its own side of the crossing", () =
   }
 });
 
-test("faces that do not cross: no pieces", () => {
+test("faces that do not cross: no pieces, and boxes a plane parts: no pairs", () => {
   const fills = [], ctx = new FakeCtx(fills), canvas = { clientWidth: 400, clientHeight: 300, width: 0, height: 0, getContext: () => ctx };
   const x = exact(), d = diorama(canvas, { exact: x, edge: false });
   Object.assign(d.cam, { yaw: 0, pitch: 0.4, dist: 20, tx: 0, ty: 0, tz: 0, ox: 0, oy: 0, fov: 0.8 });
@@ -62,7 +62,8 @@ test("faces that do not cross: no pieces", () => {
   d.add({ size: [4, 3, 2], pos: [0, 0, -3], color: "#0000ff" });
   d.draw();
   assert.equal(x.stats.pieces, 0);
-  assert.ok(x.stats.pairs > 0);
+  // A plane between their world boxes has the eye on the nearer one's side: no face pair is tested.
+  assert.equal(x.stats.pairs, 0);
 });
 
 test("a draw with the exact pass allocates nothing", async () => {
@@ -70,6 +71,6 @@ test("a draw with the exact pass allocates nothing", async () => {
   let t = 0;
   const frame = () => { d.cam.yaw = (t += 0.01); d.draw(); };
   for (let i = 0; i < 200; i++) frame();
-  const n = await minorGCs(() => { for (let i = 0; i < 10000; i++) frame(); });
+  const n = await minorGCs(() => { for (let i = 0; i < 20000; i++) frame(); });
   assert.equal(n, 0, `${n} young GCs`);
 });

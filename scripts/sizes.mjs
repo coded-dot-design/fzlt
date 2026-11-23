@@ -103,14 +103,18 @@ export const BUDGETS = [
   // With `glide` (ease the camera to a goal, field by field; tree-shakes): 7,456 B (+198 B: nine named
   // fields, as a keyed loop over them boxed a number per store); budget raised from 7,296 by that need.
   // diorama() alone stays 6,613 B.
-  // With the `exact` hook (prototype A, draft: a pass that sees the sorted faces and paints after any
-  // of them): 7,535 B (+79 B), diorama() alone 6,696 B (+83 B). Budgets raised by that need, pending the owner's call.
-  ["@fzlt/core/diorama", "src/diorama.ts", 7552],
-  ["@fzlt/core/diorama (diorama() alone)", "scripts/diorama-card.ts", 6720],
+  // With the `exact` hook (prototype A: a pass that sees the sorted faces and paints after any of
+  // them; its inputs as one tuple): 7,502 B (+47 B), diorama() alone 6,664 B (+52 B). Budgets raised
+  // 32 B each by that need (was +64 B with an object of named inputs), pending the owner's call.
+  ["@fzlt/core/diorama", "src/diorama.ts", 7520],
+  ["@fzlt/core/diorama (diorama() alone)", "scripts/diorama-card.ts", 6688],
   // Exact painter's order for a diorama (opt-in, prototype A): crossing faces cut where they are
   // equally near, pieces painted again after the face they pass; a 64 px tile grid finds the pairs.
-  // 2,023 B gz when added (diorama is a type-only import).
-  ["@fzlt/core/diorama-exact", "src/diorama-exact.ts", 2048],
+  // 2,023 B gz when added (diorama is a type-only import). 2,210 B (+187 B) with each object's world
+  // box per frame: a face pair is tested only when no plane between the two boxes has the eye on the
+  // later one's side (day loop: 4,115 → 955 pairs a frame, pass 0.85 → 0.58 ms in Node; wrong px the
+  // same). Budget 2,048 → 2,304 by that need, pending the owner's call.
+  ["@fzlt/core/diorama-exact", "src/diorama-exact.ts", 2304],
   // Seeded dice for tabletop games (diorama is a type-only import; steer's exact hypot): 4,264 B gz
   // when added, with dioramaDice and popDome; roll alone 325 B, dice() 1,920 B (they tree-shake).
   ["@fzlt/core/dice", "src/dice.ts", 4352],

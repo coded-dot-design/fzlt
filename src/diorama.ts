@@ -252,15 +252,16 @@ export interface DioramaOptions {
   maxShadows?: number;
   /** A pass that sees the sorted faces and paints after any of them, e.g. `exact()` from
    *  `@fzlt/core/diorama-exact` (split crossing faces: an exact painter's order). Pay for what you use. */
-  exact?: (f: DioramaFaces) => DioramaPass;
+  exact?: (f: DioramaFaces, o: DioramaOptions) => DioramaPass;
 }
-/** What an `exact` pass reads: screen vertices (x, y, view depth), each entry's kind, object, face and
- *  shade level, the objects, and the diorama's shade strings. Live arrays: read them, never write. */
-export interface DioramaFaces {
-  SV: Float64Array; KIND: Uint8Array; FOBJ: Int32Array; FIDX: Int32Array; FLVL: Uint8Array;
-  objs: readonly { mesh: { fs: Int32Array; fc: Int32Array; fv: Int32Array }; vb: number; i: number; color: string; et: string | null }[];
-  shade: (col: string, lvl: number) => string; edge: boolean;
-}
+/** What an `exact` pass reads, in this order: screen vertices (x, y, view depth), each entry's kind,
+ *  object, face and shade level, the objects, the diorama's shade strings, and the camera (its first
+ *  three entries: the eye, in world space). Live arrays: read them, never write. */
+export type DioramaFaces = readonly [
+  SV: Float64Array, KIND: Uint8Array, FOBJ: Int32Array, FIDX: Int32Array, FLVL: Uint8Array,
+  objs: readonly { mesh: { nv: number; v: Float64Array; fs: Int32Array; fc: Int32Array; fv: Int32Array }; M: Float64Array; vb: number; i: number; color: string; et: string | null }[],
+  shade: (col: string, lvl: number) => string, B: Float64Array,
+];
 /** An `exact` pass: `s` after the sort (n entries in paint order `ord`; `ea` the alpha per object), `p`
  *  after the face at paint position q is painted. */
 export interface DioramaPass { s(n: number, ord: Uint32Array, ea: Float64Array): void; p(ctx: CanvasRenderingContext2D, q: number): void }
@@ -358,7 +359,7 @@ export function diorama(canvas: HTMLCanvasElement, o: DioramaOptions = {}) {
   let amb = 0.56, nf = 0, nv = 0, W = 1, H = 1, dpr = 1;
   const cam: DioramaCamera = { yaw: -0.5, pitch: 0.85, dist: 30, tx: 0, ty: 0, tz: 0, ox: 0, oy: 0, fov: 0.62 };
   const stats = { faces: 0, shadows: 0, points: 0, verts: 0, objects: 0, dropped: 0 };
-  const X = o.exact && o.exact({ SV, KIND, FOBJ, FIDX, FLVL, objs, shade, edge: o.edge !== false });
+  const X = o.exact && o.exact([SV, KIND, FOBJ, FIDX, FLVL, objs, shade, B], o);
 
   function setLight(v: ArrayLike<number>, a = amb) {
     const l = len3(v[0]!, v[1]!, v[2]!) || 1;
