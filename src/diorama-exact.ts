@@ -86,10 +86,10 @@ export function exact(o: ExactOptions = {}) {
     SG[g] = ar > 0 ? 1 : -1;
     return Math.abs(ar) > (fit ? 1e-6 : 1);
   }
-  const fn = ([SV, KIND, FOBJ, FIDX, FLVL, objs, shade, E, run]: DioramaFaces, d: DioramaOptions): DioramaPass => {
+  const fn = ([SV, KIND, FOBJ, FIDX, FLVL, objs, shade, E, pools, decals, SHP, SHA]: DioramaFaces, d: DioramaOptions): DioramaPass => {
     const edge = d.edge !== false;
     // Each object's world box this frame (x0 y0 z0 x1 y1 z1), grown with the scene, never per draw.
-    let WB = new Float64Array(0), HP = new Int32Array(0), NQ = HP;
+    let WB = new Float64Array(0), HP = new Int32Array(0), NQ = HP, OR: ArrayLike<number> = HP;
     /** Can object a, painted first, hide part of object b? Not when a plane between their world boxes
      *  has the eye on b's side (every ray meets b first): the sort's order of the two is exact. */
     function can(a: number, b: number) {
@@ -129,20 +129,43 @@ export function exact(o: ExactOptions = {}) {
       PL[np * 3] = ah; PL[np * 3 + 1] = bh; PL[np * 3 + 2] = chh;
       return finish(np, false) ? 1 : 0;
     }
-    /** Paint piece g's part's paints (from paint position k, before q) again, inside piece g. A
-     *  function of its own, so the paint loop stays small enough for its calls to be inlined (a
-     *  number passed to a call that is not inlined is boxed: a young-generation allocation). */
+    /** Paint piece g's part's paints (from paint position k, before q) again, inside piece g. The pass
+     *  paints them itself (the callbacks, the shadows, the dots), never through the diorama's paint
+     *  loop: entered again from inside itself, that loop runs on code a slow tier made, and a slow
+     *  tier boxes the numbers it hands the canvas (a young-generation allocation). A function of its
+     *  own, called for every such piece, so it is fast. */
     function again(ctx: CanvasRenderingContext2D, g: number, k: number, q: number) {
-      const n = PN[g]!, o0 = g * MV;
+      const n = PN[g]!, o0 = g * MV, sn = SHP.length / SHA.length / 2;
       ctx.save();
       ctx.beginPath();
       for (let v = 0; v < n; v++) v ? ctx.lineTo(PX[o0 + v]!, PY[o0 + v]!) : ctx.moveTo(PX[o0]!, PY[o0]!);
       ctx.clip();
-      for (; k >= 0 && k < q; k = NQ[k]!) run(k, k + 1);
+      for (; k >= 0 && k < q; k = NQ[k]!) {
+        const e = OR[k]!, i = FIDX[e]!, kind = KIND[e];
+        if (kind === 3) (ctx.globalAlpha = 1), decals[i]!.fn(ctx);
+        else if (kind === 2) {
+          const P = pools[FOBJ[e]!]!;
+          ctx.globalAlpha = P.a[i]!;
+          if (P.paint) P.paint(ctx, i, P);
+          else (ctx.fillStyle = P.color[i] || P.colorAll), ctx.beginPath(), ctx.arc(P.sx[i]!, P.sy[i]!, P.sr[i]!, 0, Math.PI * 2), ctx.fill();
+        } else {
+          const j0 = i * sn * 2;
+          ctx.globalAlpha = SHA[i]!;
+          ctx.beginPath();
+          for (let v = 0; v < sn; v++) v ? ctx.lineTo(SHP[j0 + v * 2]!, SHP[j0 + v * 2 + 1]!) : ctx.moveTo(SHP[j0]!, SHP[j0 + 1]!);
+          ctx.closePath();
+          ctx.fillStyle = ctx.strokeStyle = d.shadowColor || "#000000";
+          ctx.fill();
+          ctx.globalAlpha = SHA[i]! * 0.45;
+          ctx.lineWidth = 5;
+          ctx.stroke();
+        }
+      }
       ctx.restore();
     }
     return {
       s(n, ord, ea) {
+        OR = ord;
         if (S0.length < n) (S0 = new Int32Array(ord.length)), (S1 = new Int32Array(ord.length));
         if (objs.length * 6 > WB.length) (WB = new Float64Array(objs.length * 12)), (HP = new Int32Array(objs.length * 4));
         if (NQ.length < ord.length) NQ = new Int32Array(ord.length);
