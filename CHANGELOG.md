@@ -1,6 +1,26 @@
 # Changelog
 
-## Unreleased
+## 0.29.0
+
+- **New: `@fzlt/core/diorama-exact`, an exact painter's order for a diorama, opt-in.**
+  `diorama(canvas, { exact: exact() })`: after the sort, each face is checked against the faces
+  painted before it whose screen boxes meet. Faces are checked only when the two objects' world boxes
+  could hide one another: when a plane between the boxes has the eye on the later object's side, the
+  sort's order of the two is already exact. Where an earlier face is nearer on part of the overlap,
+  that part is cut out where the two are equally near, and painted again right after the later face.
+  Pieces are checked the same way, so crossing faces draw right with no cycle to break. A part's paints
+  (shadows, points, decals after its faces) go on again inside its pieces. A piece is stroked only
+  along its face's own edges. No allocation per draw. On fizlet.com's day loop the wrong pixels
+  against a z-buffer go from 1,796,033 to 642 over 432 views; at 4× CPU on a phone it draws 4.4%
+  fewer frames, and in Firefox desktop 0.7% fewer. Limits: convex faces of up to 32 vertices; a
+  piece of a see-through face blends twice (`alpha` leaves them out).
+  - `diorama()` gets an `exact` option (a pass that sees the sorted faces and paints after any of
+    them; types `DioramaFaces`, `DioramaPass`). Sizes (gzip): diorama 7,515 B (+60 B, budget
+    7,488 → 7,520), diorama() alone 6,675 B (+63 B, budget 6,656 → 6,688), diorama-exact 2,442 B
+    (budget 2,448). The kernel is unchanged.
+  - Test: `tests/diorama-exact.test.mjs`: crossing slabs at four yaws, no pieces and no pairs for
+    parts a plane separates, a part's paint painted again inside its pieces, 0 young GCs over 20,000
+    draws.
 
 - **Fix: a swipe that starts on a page key scrolls the page.** `@fzlt/core/ui`'s `press()` cancelled
   every touchstart on its key, so on a site the page never moved under a finger that landed on a
