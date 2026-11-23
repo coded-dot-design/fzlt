@@ -247,5 +247,8 @@ export function exact(o: ExactOptions = {}) {
       },
     };
   };
-  return Object.assign(fn, { stats });
+  return Object.assign(fn, {
+    /** The last frame's pieces (cut and painted again), pairs (faces tested) and full (faces left out past `cap`). */
+    stats,
+  });
 }

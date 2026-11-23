@@ -266,7 +266,12 @@ export type DioramaFaces = readonly [
 ];
 /** An `exact` pass: `s` after the sort (n entries in paint order `ord`; `ea` the alpha per object), `p`
  *  after the face at paint position q is painted. */
-export interface DioramaPass { s(n: number, ord: Uint32Array, ea: Float64Array): void; p(ctx: CanvasRenderingContext2D, q: number): void }
+export interface DioramaPass {
+  /** After the sort: n entries in paint order `ord`; `ea` the alpha per object. */
+  s(n: number, ord: Uint32Array, ea: Float64Array): void;
+  /** After the face at paint position q is painted. */
+  p(ctx: CanvasRenderingContext2D, q: number): void;
+}
 
 interface Mesh { nv: number; v: Float64Array; nf: number; fs: Int32Array; fc: Int32Array; fv: Int32Array; nrm: Float64Array; cen: Float64Array }
 interface Cluster { name: string; fixed: number | null; at: ArrayLike<number> | null; follow: Obj | null; ci: number }
