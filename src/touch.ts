@@ -5,8 +5,8 @@
  * which ignores `user-scalable=no`) and any multi-touch `touchstart` / `touchmove` (a pinch
  * anywhere else). One finger is never touched, so taps, drags and the page's own scroll stay.
  * The CSS half lives in the Board UI kit (board-ui.css): `touch-action: manipulation` on the page
- * (no double-tap zoom) and `touch-action: none` / `pan-y` plus `overscroll-behavior: none` on the
- * same surfaces. Pass `null` to lock the whole page (a full-screen board; content pages keep
+ * (no double-tap zoom) and `touch-action: none` / `pan-y` on the same surfaces (never
+ * `overscroll-behavior`: a wheel over any of them scrolls the page). Pass `null` to lock the whole page (a full-screen board; content pages keep
  * pinch-zoom for WCAG 1.4.4). Returns `release()`: the page gets its gestures back.
  */
 
