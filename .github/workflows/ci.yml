@@ -85,7 +85,15 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           browser: "true"
-      - run: npx playwright install --with-deps webkit
+      # The install has hung on apt mid-download (three runs, 2026-11-23/24) until the job's timeout:
+      # bound each try and retry, so a stalled mirror costs minutes, not the release.
+      - name: Install WebKit (bounded, three tries)
+        run: |
+          for i in 1 2 3; do
+            timeout 240 npx playwright install --with-deps webkit && exit 0
+            echo "::warning::playwright install webkit: try $i did not finish; retrying"
+          done
+          exit 1
       - run: npm run test:webkit
   check:
     # The required check: green only when every job above is green. `always()` so a failed or
