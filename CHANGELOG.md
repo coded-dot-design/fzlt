@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.29.1
+
+## 0.29.1
 
 - **Fix: `@fzlt/core/diorama-exact` allocated a little every frame in some scenes.** Painting a part's
   paints again over its pieces went through the diorama's paint loop, entered again from inside
