@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- **Fix: `@fzlt/core/diorama-exact` allocated a little every frame in some scenes.** Painting a part's
+  paints again over its pieces went through the diorama's paint loop, entered again from inside
+  itself; that inner call runs on code a slow V8 tier made, which boxes the numbers it hands the
+  canvas. On fizlet.com's day loop, with the figure's hands resting on the desk, that was about 115 B
+  a frame and 2 young GCs per 20,000 frames in most processes. The pass now paints them itself (the
+  paint callbacks, the blob shadows, the plain dots): 29 B a frame, 0 young GCs over 20,000 frames in
+  8 of 8 processes. What the pass reads from `diorama()` (`DioramaFaces`) now carries the point
+  pools, the decals and the blob shadows in place of the paint loop; `diorama()`'s own paint loop is
+  as it was before 0.29.0 plus the pass's hook. Sizes (gzip): diorama 7,500 B (−15 B), diorama()
+  alone 6,667 B (−8 B), diorama-exact 2,658 B (+216 B; budget 2,448 → 2,688).
+  - Test: `tests/diorama-exact.test.mjs` runs `tests/lib/exact-contact-gc.mjs` in a process of its
+    own: hands sunk 4 mm into a desk top with a light, dots, decals and blob shadows on it, cut into
+    pieces every frame, 0 young GCs over 20,000 draws in one window.
 - **Fix: a wheel over an animation or a game on a page scrolls the page.** (Owner, 2026-11-22: "make
   sure the heroes and other animations don't block scrolling from the trackpad".) The Board UI kit
   (`@fzlt/core/ui/board-ui.css`) set `overscroll-behavior: none` on slots (`.ae-slot`,

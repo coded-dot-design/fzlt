@@ -93,3 +93,11 @@ test("a draw with the exact pass allocates nothing", async () => {
   const n = await minorGCs(() => { for (let i = 0; i < 20000; i++) frame(); });
   assert.equal(n, 0, `${n} young GCs`);
 });
+
+test("a contact like hands resting on a desk (its paints painted again in every piece) allocates nothing", async () => {
+  // In a process of its own, one measured window, no best-of (tests/lib/exact-contact-gc.mjs).
+  const { execFileSync } = await import("node:child_process");
+  const out = JSON.parse(execFileSync(process.execPath, ["--expose-gc", "--import", "tsx", "tests/lib/exact-contact-gc.mjs", "20000"], { encoding: "utf8" }));
+  assert.ok(out.pieces > 0 && out.paintsPerFrame > 1, `the desk is cut and its paints go on again (${JSON.stringify(out)})`);
+  assert.equal(out.minor, 0, `${out.minor} young GCs over ${out.frames} draws`);
+});
