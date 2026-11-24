@@ -2,8 +2,6 @@
 
 ## 0.29.1
 
-## 0.29.1
-
 - **Fix: `@fzlt/core/diorama-exact` allocated a little every frame in some scenes.** Painting a part's
   paints again over its pieces went through the diorama's paint loop, entered again from inside
   itself; that inner call runs on code a slow V8 tier made, which boxes the numbers it hands the
