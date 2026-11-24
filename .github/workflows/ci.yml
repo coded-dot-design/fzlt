@@ -85,13 +85,18 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           browser: "true"
-      # The install has hung on apt mid-download (three runs, 2026-11-23/24) until the job's timeout:
-      # bound each try and retry, so a stalled mirror costs minutes, not the release.
-      - name: Install WebKit (bounded, three tries)
+      # The install has hung in apt-get mid-download (2026-11-23/24) until the job's timeout, and a
+      # killed try left apt-get holding the dpkg lock for the next. So: apt gives up on a stalled
+      # mirror by itself, the browser download needs no apt, and a failed deps try clears apt first.
+      - name: Install WebKit (apt with timeouts, three tries)
         run: |
+          printf 'Acquire::http::Timeout "30";\nAcquire::https::Timeout "30";\nAcquire::Retries "3";\nDPkg::Lock::Timeout "120";\n' | sudo tee /etc/apt/apt.conf.d/99ci-net >/dev/null
+          npx playwright install webkit
           for i in 1 2 3; do
-            timeout 240 npx playwright install --with-deps webkit && exit 0
-            echo "::warning::playwright install webkit: try $i did not finish; retrying"
+            timeout 300 npx playwright install-deps webkit && exit 0
+            echo "::warning::playwright install-deps webkit: try $i did not finish; clearing apt and retrying"
+            sudo pkill -9 -x apt-get || true; sudo pkill -9 -x dpkg || true
+            sudo dpkg --configure -a || true
           done
           exit 1
       - run: npm run test:webkit
