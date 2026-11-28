@@ -4,7 +4,7 @@
  *   easterEgg - false: open now. true / {...}: stay dormant (tiny listeners only) until a trigger
  *               (key sequence, gesture on a selector, click on a selector), then lazy-load the game.
  *   toggle    - a floating key to reopen / close once unlocked. Escape closes and restores the page.
- * Lifted from Swarm Protocol's loader: keys typed in fields never count, only a position and a
+ * Keys typed in fields never count, only a position and a
  * timestamp are kept for the sequence (never the typed text), and destroy() removes everything.
  */
 import { applyPalette, type Palette } from "./ui/board-ui";

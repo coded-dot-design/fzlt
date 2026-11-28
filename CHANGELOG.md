@@ -23,6 +23,111 @@
     behind one is clipped exactly at the crest line. 2,625 B with the painter (budget 2,688).
   - Zero allocation per frame with all of it on. Tests: `tests/ribbon-tracks.test.mjs`,
     `tests/ribbon-tracks.mjs` (Chromium, one still canvas per export).
+
+## 0.29.1
+
+- **Fix: `@fzlt/core/diorama-exact` allocated a little every frame in some scenes.** Painting a part's
+  paints again over its pieces went through the diorama's paint loop, entered again from inside
+  itself; that inner call runs on code a slow V8 tier made, which boxes the numbers it hands the
+  canvas. On fizlet.com's day loop, with the figure's hands resting on the desk, that was about 115 B
+  a frame and 2 young GCs per 20,000 frames in most processes. The pass now paints them itself (the
+  paint callbacks, the blob shadows, the plain dots): 29 B a frame, 0 young GCs over 20,000 frames in
+  8 of 8 processes. What the pass reads from `diorama()` (`DioramaFaces`) now carries the point
+  pools, the decals and the blob shadows in place of the paint loop; `diorama()`'s own paint loop is
+  as it was before 0.29.0 plus the pass's hook. Sizes (gzip): diorama 7,500 B (−15 B), diorama()
+  alone 6,667 B (−8 B), diorama-exact 2,658 B (+216 B; budget 2,448 → 2,688).
+  - Test: `tests/diorama-exact.test.mjs` runs `tests/lib/exact-contact-gc.mjs` in a process of its
+    own: hands sunk 4 mm into a desk top with a light, dots, decals and blob shadows on it, cut into
+    pieces every frame, 0 young GCs over 20,000 draws in one window.
+- **Fix: a wheel over an animation or a game on a page scrolls the page.** (Owner, 2026-11-22: "make
+  sure the heroes and other animations don't block scrolling from the trackpad".) The Board UI kit
+  (`@fzlt/core/ui/board-ui.css`) set `overscroll-behavior: none` on slots (`.ae-slot`,
+  `[data-fizlet-slot]`, `[data-touch-lock="y"]`) and on game hosts (`[data-fizlet-host]`,
+  `[data-touch-lock]`). On a clipping box (`overflow: hidden`, as every slot is) Chromium reads it as
+  "keep the wheel": a trackpad or mouse wheel over a hero, a gallery piece or an embedded game moved
+  nothing. Both rules lose it; touch is as it was (slots `pan-y`: a vertical swipe scrolls the page,
+  only a sideways drag reaches the piece; hosts `none`; `lockTouch` still cancels pinch). No brick
+  listens to `wheel` or cancels it. No API change; JavaScript sizes unchanged.
+  - Test: `tests/wheel.mjs` (in `test:browser`): in Chromium a wheel over a clipping slot, a game
+    host and a turntable moves `window.scrollY`; on a phone a vertical swipe over the slot and the
+    turntable scrolls the page; the control (the old rule added back) keeps the wheel, so it can fail.
+
+## 0.29.0
+
+- **New: `@fzlt/core/diorama-exact`, an exact painter's order for a diorama, opt-in.**
+  `diorama(canvas, { exact: exact() })`: after the sort, each face is checked against the faces
+  painted before it whose screen boxes meet. Faces are checked only when the two objects' world boxes
+  could hide one another: when a plane between the boxes has the eye on the later object's side, the
+  sort's order of the two is already exact. Where an earlier face is nearer on part of the overlap,
+  that part is cut out where the two are equally near, and painted again right after the later face.
+  Pieces are checked the same way, so crossing faces draw right with no cycle to break. A part's paints
+  (shadows, points, decals after its faces) go on again inside its pieces. A piece is stroked only
+  along its face's own edges. No allocation per draw. On fizlet.com's day loop the wrong pixels
+  against a z-buffer go from 1,796,033 to 642 over 432 views; at 4× CPU on a phone it draws 4.4%
+  fewer frames, and in Firefox desktop 0.7% fewer. Limits: convex faces of up to 32 vertices; a
+  piece of a see-through face blends twice (`alpha` leaves them out).
+  - `diorama()` gets an `exact` option (a pass that sees the sorted faces and paints after any of
+    them; types `DioramaFaces`, `DioramaPass`). Sizes (gzip): diorama 7,515 B (+60 B, budget
+    7,488 → 7,520), diorama() alone 6,675 B (+63 B, budget 6,656 → 6,688), diorama-exact 2,442 B
+    (budget 2,448). The kernel is unchanged.
+  - Test: `tests/diorama-exact.test.mjs`: crossing slabs at four yaws, no pieces and no pairs for
+    parts a plane separates, a part's paint painted again inside its pieces, 0 young GCs over 20,000
+    draws.
+
+- **Fix: a swipe that starts on a page key scrolls the page.** `@fzlt/core/ui`'s `press()` cancelled
+  every touchstart on its key, so on a site the page never moved under a finger that landed on a
+  key (fizlet.com's home demo and brick cards; owner, 2026-11-22: a section of a page never blocks
+  scrolling). Outside a game surface (`[data-fizlet-host]`, `[data-touch-lock]`) one
+  finger now presses on the tap's click (the kit's `touch-action: manipulation`: no 300 ms wait),
+  and a swipe presses nothing; in a game surface, and for a second finger, the press still fires on
+  touchstart and keeps the finger. No API change. `@fzlt/core/ui` js 2,940 B gzip (budget 2,944).
+  - Test: `tests/press.mjs` (in `test:browser`): on a phone, a swipe from a page key scrolls the page
+    and presses nothing, a tap presses it once, a game host's key presses on touchstart and keeps the
+    finger; the old press is the control (the swipe keeps the page still).
+
+## 0.28.1
+
+- **Fix: a finger with any pointer id holds a control, and a free control answers to none.**
+  `@fzlt/core/pad` (the stick), `@fzlt/core/input` (the touch stick and the pointer) and
+  `@fzlt/core/turntable` (the grip) marked "no finger" with the id -1 and, in two places, read a
+  negative id as "free". A phone can hand out negative pointer ids: a second finger could then take
+  a held stick, a turntable could be gripped twice, and with nothing held a move from a pointer
+  whose id is -1 steered the stick. "No finger" is now a value no id equals. No API change; sizes
+  within budget (pad 2,069 B, input 1,912 B, turntable 1,393 B, page build 7,103 B gzip).
+  - Test: `tests/browser.mjs` presses, moves and lifts the pad's stick with ids -2147483648, -7, -1,
+    0 and 2147483647, and sends a stray move with id -1 while it is free (it failed before the fix).
+
+## 0.28.0
+
+- **Breaking: every storage key and page hook is named for Fizlet.** Renames, with no alias left
+  behind (the older names are no longer read, matched or set):
+  - `@fzlt/core/ui`: `PERF_KEY` is `"fizlet:perf"`. A visitor's saved "Performance overlay" switch
+    is read from the new key, so it starts off once.
+  - `@fzlt/core/ui/tokens.json`: `name` is `"Fizlet Board UI"`; the `storage` keys are
+    `fizlet:theme`, `fizlet:perf`, `fizlet:<game>:sound` and `fizlet:doors`; the second entry of
+    `shadow.domains` is `"example: a site with a diagonal light"`.
+  - `@fzlt/core/arcade`: the default selectors match the `data-fizlet-*` hooks only
+    (`[data-fizlet-text]`, `[data-fizlet-target]`, `[data-fizlet-ignore]`), and the overlay host
+    carries `data-fizlet-host` and `data-fizlet-ignore` only. A page that used the older hook
+    attributes renames them to these.
+  Comments, docs, tests and the brick catalog name the Fizlet Arcade's games only; the repository
+  is https://github.com/fizlet/fzlt.
+
+- **Repository: the package alone, ready to become `fizlet/fzlt` (public, MIT).** The website
+  (`site/`, `examples/`, its build scripts, its tests, the Pages deploy and the site, settle and
+  page-cost CI jobs) moves to its own repository; fizlet.com is rebuilt there. No change to the
+  package's code or API: the tarball is the same `bin/`, `dist/`, CHANGELOG, LICENSE and README.
+  `package.json`: repository and bugs at `fizlet/fzlt`, homepage https://docs.fzlt.dev (the `fzlt`
+  bin prints it). The brick catalog moves to `scripts/bricks.mjs`; `npm run perf` measures the home
+  demo on a page of its own (`tests/perf/fixture`); the release workflow publishes from `fizlet/fzlt`
+  only. `docs/bricks-inventory.md`: every brick's measured gzip size, who ships it and its docs.
+  The package keeps its public documentation and nothing else: the TSDoc blocks in `dist/*.d.ts`
+  and the `/* @__PURE__ */` annotations in `dist/*.js` stay, every other comment is stripped (packed
+  364,459 B, was 377,562 B; consumers' bundles unchanged). `npm run publish-clean` gates every PR and
+  publish: only `dist/`, `bin/` and the four docs, no other comments, no agent words, no private names. Credits: created by Chris Cooley,
+  built with fzlt, sponsored by coded.design (`tests/credits.test.mjs`). `docs/SPLIT.md`: what this
+  repository is now, where the site lives, how a release reaches it, and the transfer steps.
+
 - **`@fzlt/core/ribbon`** (new brick, ALPHA; 2,683 B gz, budget 2,752): roads, tracks and edge strips
   drawn along their true curve at their true width on a heightfield, lifted from Holeshot's road-edge
   ribbons (its road graph and materials stay in the game). `ribbon(d, ground, options)` adds one decal to

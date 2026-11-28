@@ -11,7 +11,7 @@ const { arcade, arcadeHud } = await import("../src/arcade.ts");
 const { esc } = await import("../src/arcade-parts.ts");
 
 const def = (extra = {}) => ({
-  id: "test-game", title: `Null <Invaders> & "co"`, color: "#06c4ff", hint: "Move: WASD", css: ".bui{}", colors: ["#fff"], cues: { shot: "fire" },
+  id: "test-game", title: `Test <Game> & "co"`, color: "#06c4ff", hint: "Move: WASD", css: ".bui{}", colors: ["#fff"], cues: { shot: "fire" },
   create: () => {
     throw new Error("create must not run in these tests");
   },

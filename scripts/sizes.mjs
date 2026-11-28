@@ -103,8 +103,25 @@ export const BUDGETS = [
   // With `glide` (ease the camera to a goal, field by field; tree-shakes): 7,456 B (+198 B: nine named
   // fields, as a keyed loop over them boxed a number per store); budget raised from 7,296 by that need.
   // diorama() alone stays 6,613 B.
-  ["@fzlt/core/diorama", "src/diorama.ts", 7488],
-  ["@fzlt/core/diorama (diorama() alone)", "scripts/diorama-card.ts", 6656],
+  // With the `exact` hook (prototype A: a pass that sees the sorted faces and paints after any of
+  // them; its inputs as one tuple, with the point pools, decals and blob shadows the pass paints
+  // again over a part's pieces): 7,500 B (+45 B), diorama() alone 6,667 B (+55 B).
+  // Budgets raised 32 B each by that need (was +64 B with an object of named inputs), pending the owner.
+  ["@fzlt/core/diorama", "src/diorama.ts", 7520],
+  ["@fzlt/core/diorama (diorama() alone)", "scripts/diorama-card.ts", 6688],
+  // Exact painter's order for a diorama (opt-in, prototype A): crossing faces cut where they are
+  // equally near, pieces painted again after the face they pass; a 64 px tile grid finds the pairs.
+  // 2,023 B gz when added (diorama is a type-only import). 2,210 B (+187 B) with each object's world
+  // box per frame: a face pair is tested only when no plane between the two boxes has the eye on the
+  // later one's side (day loop: 4,115 → 955 pairs a frame, pass 0.85 → 0.58 ms in Node; wrong px the
+  // same). 2,413 B (+203 B) with a part's paints (shadows, points, decals after its faces) painted
+  // again, clipped, over its pieces: a piece no longer covers the light or a shadow on its part;
+  // 2,442 B with that repaint in a function of its own (the site's day loop: 0 young GCs, was 7).
+  // Budget 2,048 → 2,448 by those needs (owner, 0.29.0). 2,658 B (+216 B) with the part's paints
+  // painted by the pass itself (callbacks, blob shadows, dots), never by the diorama's paint loop
+  // entered again: fizlet.com's day loop 115 → 29 B allocated a frame, 0 young GCs over 20,000 frames
+  // (was 2 in most processes). Budget 2,448 → 2,688 by that need, pending the owner's call.
+  ["@fzlt/core/diorama-exact", "src/diorama-exact.ts", 2688],
   // Seeded dice for tabletop games (diorama is a type-only import; steer's exact hypot): 4,264 B gz
   // when added, with dioramaDice and popDome; roll alone 325 B, dice() 1,920 B (they tree-shake).
   ["@fzlt/core/dice", "src/dice.ts", 4352],

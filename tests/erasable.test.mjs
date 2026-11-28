@@ -1,5 +1,4 @@
-// Fizlet's TypeScript is erasable: games vendor src/ and typecheck it with `erasableSyntaxOnly` (byte-runner,
-// null-invaders, sherman-bytes), so a const enum, an enum, a namespace or a parameter property would break
+// Fizlet's TypeScript is erasable: games vendor src/ and typecheck it with `erasableSyntaxOnly`, so a const enum, an enum, a namespace or a parameter property would break
 // their build after a sync. tsconfig.json sets the flag for `npm run typecheck`; this test checks every
 // file with Node's own type stripper, which refuses the same syntax.
 import test from "node:test";

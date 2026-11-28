@@ -56,7 +56,7 @@ export function launch(options = {}) {
 const bundle = (await build({ stdin: { contents: GAME, resolveDir: process.cwd(), loader: "ts" }, bundle: true, format: "iife", globalName: "T", write: false, logLevel: "silent" })).outputFiles[0].text;
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;font:18px/1.6 system-ui;background:#101514;color:#e1ebdb">
-<div data-virus-ignore><button id="outside">Outside</button></div>
+<div data-fizlet-ignore><button id="outside">Outside</button></div>
 <main id="board" style="max-width:900px;margin:auto;padding:30px">
 <h1 style="font-size:56px">The page is the board.</h1>
 <p>Real words and <a href="#away" id="link">a link</a>. Every letter here is terrain for the test ship to shoot at.</p>

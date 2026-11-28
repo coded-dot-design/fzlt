@@ -51,7 +51,7 @@ export function controls(e: Engine, o: ControlsOptions = {}) {
   // target left, top, width (measured in read), needs measuring.
   // Stick: x, y in -1..1, active, origin x, origin y, pointer id.
   const p = new Float64Array(10), s = new Float64Array(6);
-  p[5] = s[5] = -1;
+  p[5] = s[5] = 1 / 0; // no pointer: Infinity equals no id (a real id can be any integer)
   const measure = () => {
     const r = target?.getBoundingClientRect();
     p[6] = r?.left ?? 0;
@@ -68,7 +68,7 @@ export function controls(e: Engine, o: ControlsOptions = {}) {
     fresh.fill(0);
     at.fill(-1);
     p[2] = s[0] = s[1] = s[2] = 0;
-    p[5] = s[5] = -1;
+    p[5] = s[5] = 1 / 0;
   };
 
   addEventListener("keydown", (ev) => {
@@ -113,7 +113,7 @@ export function controls(e: Engine, o: ControlsOptions = {}) {
     // A touch on the stick side takes a free stick, and a held one too when it is the primary
     // pointer: no other finger is down, so the old one is stale (iOS can end a touch with no
     // pointerup). A second finger while the stick is held stays a pointer (multi-touch).
-    if (pe.pointerType === "touch" && o.stick && (s[5]! < 0 || pe.isPrimary) && (o.stick === "any" || pe.clientX - p[6]! < p[8]! / 2)) {
+    if (pe.pointerType === "touch" && o.stick && (s[5]! > 4e9 || pe.isPrimary) && (o.stick === "any" || pe.clientX - p[6]! < p[8]! / 2)) {
       s[2] = 1;
       s[3] = pe.clientX;
       s[4] = pe.clientY;
@@ -130,8 +130,8 @@ export function controls(e: Engine, o: ControlsOptions = {}) {
   // Released anywhere (outside the target too), cancelled, or capture lost: only its owner lets go.
   const up = (ev: Event) => {
     const id = (ev as PointerEvent).pointerId;
-    if (id === s[5]) (s[0] = s[1] = s[2] = 0), (s[5] = -1);
-    if (id === p[5]) (p[2] = 0), (p[5] = -1);
+    if (id === s[5]) (s[0] = s[1] = s[2] = 0), (s[5] = 1 / 0);
+    if (id === p[5]) (p[2] = 0), (p[5] = 1 / 0);
   };
   for (const t of ["pointerup", "pointercancel", "lostpointercapture"]) addEventListener(t, up, { signal: ctl.signal, capture: true });
 

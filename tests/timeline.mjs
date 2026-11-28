@@ -111,7 +111,7 @@ try {
   }
   {
     // Off screen and back (a real IntersectionObserver): the engine pauses, then the loop plays on
-    // (dom-virus#33: the engine's pause hook used to pause the timeline for good).
+    // (the engine's pause hook used to pause the timeline for good).
     const p = await browser.newPage({ viewport: { width: 900, height: 700 } });
     await p.setContent(PAGE.replace('<main id="page">', '<main id="page" style="padding-bottom:3000px">'));
     const r = await p.evaluate(async () => {

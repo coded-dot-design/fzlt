@@ -77,8 +77,10 @@
 }
 
 /* Touch (with @fzlt/core/touch's lockTouch for pinch): a tap is a tap, never a double-tap zoom. Game
-   surfaces take every gesture; animation slots let the page scroll up and down through them, but
-   never pan sideways or zoom. */
+   surfaces take every touch gesture; animation slots let the page scroll up and down through them, but
+   never pan sideways or zoom. A wheel (a trackpad, a mouse) over any of them always scrolls the page:
+   no overscroll-behavior here, since on a clipping box (overflow: hidden, as every slot is) Chromium
+   reads it as "keep the wheel", and the page stops under the pointer. */
 .bui {
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
@@ -87,11 +89,9 @@
 .bui:is([data-fizlet-host], [data-touch-lock]),
 .bui :is([data-fizlet-host], [data-touch-lock]) {
   touch-action: none;
-  overscroll-behavior: none;
 }
 .bui :is(.ae-slot, [data-fizlet-slot], [data-touch-lock="y"]) {
   touch-action: pan-y;
-  overscroll-behavior: none;
 }
 
 /* ---------- 2. The 3D key: one family, five states ----------

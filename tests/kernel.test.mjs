@@ -228,11 +228,11 @@ test("bounded: pools and the event ring refuse work at their cap", () => {
   e.destroy();
 });
 
-test("seeded random: deterministic, restorable, same sequence as the DOM VIRUS core", () => {
+test("seeded random: deterministic, restorable, the sequence is pinned", () => {
   const a = seeded(42), b = seeded(42);
   const xs = [a(), a(), a()];
   assert.deepEqual(xs, [b(), b(), b()]);
-  // The core's seededRandom(42): n = n * 1664525 + 1013904223 (mod 2^32), / 2^32.
+  // The reference LCG from seed 42: n = n * 1664525 + 1013904223 (mod 2^32), / 2^32.
   let n = 42;
   const core = () => ((n = (Math.imul(n, 1664525) + 1013904223) >>> 0), n / 4294967296);
   assert.deepEqual(xs, [core(), core(), core()]);

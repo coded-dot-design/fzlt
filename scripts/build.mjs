@@ -4,16 +4,26 @@ import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { stripDtsComments, stripJsComments } from "./comments.mjs";
 import { checkTokens, readTokenSources } from "./tokens.mjs";
 import { measure, sizesJson } from "./sizes.mjs";
 
-export const ENTRIES = ["src/index.ts", "src/kernel/index.ts", "src/debug.ts", "src/perf.ts", "src/input.ts", "src/collide.ts", "src/fx.ts", "src/camera.ts", "src/sound.ts", "src/embed.ts", "src/slot.ts", "src/grid.ts", "src/sprite.ts", "src/pad.ts", "src/presence.ts", "src/presence-check.ts", "src/rollback.ts", "src/hud.ts", "src/match.ts", "src/rules.ts", "src/steer.ts", "src/math.ts", "src/coach.ts", "src/timeline.ts", "src/touch.ts", "src/css-clock.ts", "src/actor.ts", "src/aim.ts", "src/view-dom.ts", "src/announce.ts", "src/layout.ts", "src/view-canvas.ts", "src/diorama.ts", "src/dice.ts", "src/track.ts", "src/water.ts", "src/props.ts", "src/beam.ts", "src/cards.ts", "src/flick.ts", "src/terrain.ts", "src/drive.ts", "src/rig.ts", "src/ribbon.ts", "src/ribbon-tracks.ts", "src/turntable.ts", "src/ground.ts", "src/scene.ts", "src/arcade.ts", "src/board-page.ts", "src/ui/board-ui.ts"];
+export const ENTRIES = ["src/index.ts", "src/kernel/index.ts", "src/debug.ts", "src/perf.ts", "src/input.ts", "src/collide.ts", "src/fx.ts", "src/camera.ts", "src/sound.ts", "src/embed.ts", "src/slot.ts", "src/grid.ts", "src/sprite.ts", "src/pad.ts", "src/presence.ts", "src/presence-check.ts", "src/rollback.ts", "src/hud.ts", "src/match.ts", "src/rules.ts", "src/steer.ts", "src/math.ts", "src/coach.ts", "src/timeline.ts", "src/touch.ts", "src/css-clock.ts", "src/actor.ts", "src/aim.ts", "src/view-dom.ts", "src/announce.ts", "src/layout.ts", "src/view-canvas.ts", "src/diorama.ts", "src/diorama-exact.ts", "src/dice.ts", "src/track.ts", "src/water.ts", "src/props.ts", "src/beam.ts", "src/cards.ts", "src/flick.ts", "src/terrain.ts", "src/drive.ts", "src/rig.ts", "src/ribbon.ts", "src/ribbon-tracks.ts", "src/turntable.ts", "src/ground.ts", "src/scene.ts", "src/arcade.ts", "src/board-page.ts", "src/ui/board-ui.ts"];
 // tokens.json is the authoritative token source: refuse to build when the CSS or the palette map drifts.
 const drift = checkTokens(readTokenSources());
 if (drift.length) throw new Error(`Board UI tokens disagree with src/ui/tokens.json:\n  ${drift.join("\n  ")}`);
 rmSync("dist", { recursive: true, force: true });
 await build({ entryPoints: ENTRIES, outdir: "dist", outbase: "src", bundle: true, splitting: true, chunkNames: "chunks/[name]-[hash]", format: "esm", target: "es2022", platform: "browser", legalComments: "none", logLevel: "warning" });
 execFileSync("npx", ["tsc", "-p", "tsconfig.json"], { stdio: "inherit" });
+// What ships keeps its public documentation and nothing else: the TSDoc blocks on the declarations
+// (editors show them) and the bundler annotations in the JS (/* @__PURE__ */, /* @__NO_SIDE_EFFECTS__ */:
+// consumers' tree-shaking reads them). Every other comment (esbuild's path markers, line comments,
+// notes inside function bodies) is stripped here; scripts/publish-clean.mjs checks it.
+for (const f of readdirSync("dist", { recursive: true })) {
+  const file = join("dist", String(f));
+  if (file.endsWith(".d.ts")) writeFileSync(file, stripDtsComments(readFileSync(file, "utf8")));
+  else if (file.endsWith(".js")) writeFileSync(file, stripJsComments(readFileSync(file, "utf8")));
+}
 // Declarations: give relative imports their file extension, so consumers on any module resolution
 // (Bundler, Node16, NodeNext) can follow them: "./kernel/index" -> "./kernel/index.js".
 for (const f of readdirSync("dist", { recursive: true })) {
