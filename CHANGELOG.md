@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.30.0
 
 - **`@fzlt/core/ribbon-tracks`** (new entry point of the ribbon brick, ALPHA; 3,778 B gz with all of it,
   budget 3,840): what a game's tracks need on top of `@fzlt/core/ribbon`, as separate exports on one
